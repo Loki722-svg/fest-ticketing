@@ -1,0 +1,1778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Festiva — College Fest</title>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<style>
+  /* ───────── Tokens ───────── */
+  :root {
+    --ink:#17142e; --muted:#58557a;
+    --brand:#5b4bdb; --brand-2:#8b5cf6;
+    --ok:#0f7a4a; --bad:#b3261e; --warn:#9a5b00;
+
+    --base:#dde2ff;
+    --orb-1:#7f6dff; --orb-2:#ff8cc6; --orb-3:#4fd1ff; --orb-4:#ffc58a;
+
+    --glass:rgba(255,255,255,.42);
+    --glass-strong:rgba(255,255,255,.62);
+    --field:rgba(255,255,255,.55);
+    --hi:rgba(255,255,255,.85);   /* top inner highlight */
+    --lo:rgba(255,255,255,.25);   /* bottom inner highlight */
+    --rim-a:rgba(255,255,255,.95); --rim-b:rgba(255,255,255,.08);
+    --shadow:0 10px 40px -10px rgba(52,40,140,.28), 0 2px 8px rgba(52,40,140,.08);
+    --row:rgba(255,255,255,.35);
+    --r-lg:28px; --r-md:20px; --r-sm:14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink:#f1efff; --muted:#aaa7cc;
+      --brand:#7a6bff; --brand-2:#a67cff;
+      --ok:#5ee0a0; --bad:#ff8f86; --warn:#ffc46b;
+      --base:#0a0920;
+      --orb-1:#4a3bd6; --orb-2:#b0357f; --orb-3:#1b7fb5; --orb-4:#8a4a1c;
+      --glass:rgba(255,255,255,.075);
+      --glass-strong:rgba(255,255,255,.13);
+      --field:rgba(255,255,255,.07);
+      --hi:rgba(255,255,255,.28); --lo:rgba(255,255,255,.06);
+      --rim-a:rgba(255,255,255,.5); --rim-b:rgba(255,255,255,.03);
+      --shadow:0 14px 50px -12px rgba(0,0,0,.6), 0 2px 8px rgba(0,0,0,.3);
+      --row:rgba(255,255,255,.05);
+    }
+  }
+
+  * { box-sizing:border-box; }
+  html { -webkit-text-size-adjust:100%; }
+  body {
+    margin:0; min-height:100vh; color:var(--ink); background:var(--base);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI Variable Display","Segoe UI",Inter,Roboto,system-ui,sans-serif;
+    line-height:1.45; -webkit-font-smoothing:antialiased;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+
+  /* ───────── Living backdrop (what the glass refracts) ───────── */
+  .bg { position:fixed; inset:0; z-index:-1; overflow:hidden; background:var(--base); }
+  .orb { position:absolute; border-radius:50%; filter:blur(70px); opacity:.85; will-change:transform; }
+  .orb.a { width:52vmax; height:52vmax; background:var(--orb-1); top:-18vmax; left:-12vmax; animation:drift-a 26s ease-in-out infinite alternate; }
+  .orb.b { width:40vmax; height:40vmax; background:var(--orb-2); top:12vmax; right:-14vmax; animation:drift-b 31s ease-in-out infinite alternate; }
+  .orb.c { width:44vmax; height:44vmax; background:var(--orb-3); bottom:-20vmax; left:8vmax; animation:drift-c 29s ease-in-out infinite alternate; }
+  .orb.d { width:26vmax; height:26vmax; background:var(--orb-4); bottom:4vmax; right:12vmax; opacity:.6; animation:drift-a 36s ease-in-out infinite alternate-reverse; }
+  @keyframes drift-a { to { transform:translate(9vmax,7vmax) scale(1.12); } }
+  @keyframes drift-b { to { transform:translate(-10vmax,6vmax) scale(.92); } }
+  @keyframes drift-c { to { transform:translate(8vmax,-8vmax) scale(1.08); } }
+
+  /* ───────── Liquid-glass surface ───────── */
+  .glass, .card, header {
+    position:relative;
+    background:var(--glass);
+    -webkit-backdrop-filter:blur(24px) saturate(180%);
+            backdrop-filter:blur(24px) saturate(180%);
+    box-shadow:var(--shadow), inset 0 1px 1px var(--hi), inset 0 -1px 1px var(--lo), inset 0 0 22px -6px var(--lo);
+  }
+  .glass::before, .card::before, header::before {
+    content:""; position:absolute; inset:0; border-radius:inherit; padding:1.2px; pointer-events:none;
+    background:linear-gradient(135deg,var(--rim-a),var(--rim-b) 38%,var(--rim-b) 62%,var(--rim-a));
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor; mask-composite:exclude;
+  }
+
+  /* ───────── Header (floating pill) ───────── */
+  header {
+    position:sticky; top:max(12px,env(safe-area-inset-top)); z-index:20;
+    max-width:1180px; margin:12px auto 0; width:calc(100% - 24px);
+    padding:10px 10px 10px 16px; border-radius:999px;
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  }
+  header h1 { margin:0; font-size:18px; font-weight:700; letter-spacing:-.02em; flex:1; display:flex; align-items:center; gap:10px; min-width:210px; }
+  .logo {
+    width:36px; height:36px; border-radius:10px; display:grid; place-items:center;
+    background:rgba(255,255,255,.88); padding:2px;
+    box-shadow:inset 0 1px 1px rgba(255,255,255,.9), 0 4px 12px -2px rgba(42,42,114,.35);
+  }
+  .logo svg { width:100%; height:100%; display:block; }
+  nav { display:flex; gap:4px; padding:4px; border-radius:999px; background:var(--row); box-shadow:inset 0 1px 3px rgba(0,0,0,.08); }
+  nav button {
+    background:transparent; border:0; color:var(--ink); padding:8px 16px; border-radius:999px;
+    font:inherit; font-size:14px; font-weight:600; cursor:pointer; transition:background .25s, box-shadow .25s, color .25s;
+  }
+  nav button:hover { background:var(--glass); }
+  nav button.active {
+    background:var(--glass-strong);
+    box-shadow:0 2px 8px rgba(40,30,120,.18), inset 0 1px 1px var(--hi), inset 0 -1px 1px var(--lo);
+  }
+
+  /* ───────── Layout ───────── */
+  main { max-width:1180px; margin:28px auto 60px; padding:0 12px; }
+  section { animation:view-in .35s cubic-bezier(.2,.8,.2,1); }
+  @keyframes view-in { from { opacity:0; transform:translateY(8px) scale(.99); } }
+  .hidden { display:none !important; }
+  h2 { margin:0 0 6px; font-size:26px; letter-spacing:-.025em; line-height:1.15; }
+  h3 { margin:0 0 6px; font-size:19px; letter-spacing:-.015em; }
+  .muted { color:var(--muted); font-size:14px; }
+  .card { border-radius:var(--r-lg); padding:22px; }
+  .stack > * + * { margin-top:16px; }
+
+  /* Hero (Centered with Middle College Logo) */
+  .hero { padding:18px 6px 26px; max-width:680px; margin:0 auto; text-align:center; }
+  .hero-logo-wrap {
+    width:112px; height:112px; margin:0 auto 16px; padding:8px;
+    border-radius:28px; background:rgba(255,255,255,.78);
+    box-shadow:0 14px 34px -8px rgba(42,42,114,.32), inset 0 1px 2px rgba(255,255,255,.95);
+    display:grid; place-items:center;
+    -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px);
+  }
+  .hero-logo-wrap svg { width:100%; height:100%; display:block; filter:drop-shadow(0 2px 4px rgba(0,0,0,.08)); }
+  .hero h2 { font-size:clamp(32px,6vw,48px); font-weight:800; letter-spacing:-.035em; line-height:1.04; margin-bottom:10px; }
+  .hero p { margin:0; font-size:17px; color:var(--muted); }
+
+  /* ───────── Controls ───────── */
+  label { display:block; font-size:13px; font-weight:600; color:var(--muted); }
+  input, select {
+    display:block; width:100%; padding:13px 16px; margin:6px 0 14px; font:inherit; font-size:16px; color:var(--ink);
+    background:var(--field); border:1px solid rgba(255,255,255,.35); border-radius:var(--r-sm);
+    box-shadow:inset 0 2px 6px rgba(30,20,90,.10), inset 0 1px 0 rgba(255,255,255,.2);
+    -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+    transition:box-shadow .2s, border-color .2s, background .2s;
+  }
+  input::placeholder { color:var(--muted); opacity:.75; }
+  input:focus, select:focus { outline:none; border-color:var(--brand); background:var(--glass-strong);
+    box-shadow:0 0 0 4px color-mix(in srgb,var(--brand) 28%,transparent), inset 0 2px 6px rgba(30,20,90,.08); }
+  #search, #p-search { margin:0 0 22px; padding:16px 20px 16px 48px; border-radius:999px; font-size:17px;
+    background:var(--field) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none' stroke='%238884b0' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='9' cy='9' r='6'/%3E%3Cpath d='m14 14 4 4'/%3E%3C/svg%3E") no-repeat 18px center; }
+
+  button { font:inherit; }
+  button.primary {
+    position:relative; color:#fff; border:0; padding:13px 22px; border-radius:999px; font-size:15px; font-weight:650; cursor:pointer;
+    background:linear-gradient(180deg,#7a63f2 0%,#5441d6 100%);
+    box-shadow:0 8px 22px -6px rgba(91,75,219,.65), inset 0 1px 1px rgba(255,255,255,.65), inset 0 -2px 4px rgba(20,10,90,.25);
+    transition:transform .15s, box-shadow .2s, filter .2s;
+  }
+  button.primary:hover:not(:disabled) { filter:brightness(1.07); box-shadow:0 12px 28px -6px rgba(91,75,219,.75), inset 0 1px 1px rgba(255,255,255,.7), inset 0 -2px 4px rgba(20,10,90,.25); }
+  button.primary:active:not(:disabled) { transform:scale(.96); }
+  button.primary:disabled { opacity:.5; cursor:not-allowed; filter:saturate(.4); }
+  button.ghost, button.small {
+    color:var(--ink); background:var(--glass-strong); border:1px solid rgba(255,255,255,.3); cursor:pointer; font-weight:600;
+    box-shadow:0 2px 8px rgba(40,30,120,.12), inset 0 1px 1px var(--hi); transition:transform .15s, background .2s;
+  }
+  button.ghost { padding:9px 16px; border-radius:999px; font-size:14px; margin-bottom:14px; }
+  button.small { padding:6px 12px; border-radius:999px; font-size:13px; margin:2px 4px 2px 0; }
+  button.ghost:hover, button.small:hover { background:var(--glass); }
+  button.ghost:active, button.small:active { transform:scale(.95); }
+  button.danger { color:var(--bad); border-color:color-mix(in srgb,var(--bad) 45%,transparent); }
+
+  :focus-visible { outline:3px solid color-mix(in srgb,var(--brand) 70%,#fff); outline-offset:2px; }
+  input:focus-visible, select:focus-visible { outline:none; }
+
+  .msg { padding:12px 16px; border-radius:var(--r-sm); margin:14px 0 0; font-size:14px; font-weight:550;
+    border:1px solid; -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); }
+  .msg.err { background:color-mix(in srgb,var(--bad) 14%,transparent); color:var(--bad); border-color:color-mix(in srgb,var(--bad) 35%,transparent); }
+  .msg.ok  { background:color-mix(in srgb,var(--ok) 14%,transparent);  color:var(--ok);  border-color:color-mix(in srgb,var(--ok) 35%,transparent); }
+  .msg.info { background:color-mix(in srgb,var(--brand) 12%,transparent); color:var(--text); border-color:color-mix(in srgb,var(--brand) 35%,transparent); }
+  .eyebrow { font-size:11px; font-weight:750; letter-spacing:.16em; color:var(--brand); margin:0 0 6px; }
+
+  /* ───────── Events grid ───────── */
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:18px; }
+  .event { --h:250; display:flex; flex-direction:column; gap:14px; overflow:hidden; padding:20px; transition:transform .3s cubic-bezier(.2,.8,.2,1); }
+  .event:hover { transform:translateY(-3px); }
+  .event::after { content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none; opacity:0; transition:opacity .3s;
+    background:radial-gradient(260px circle at var(--mx,50%) var(--my,0%),rgba(255,255,255,.38),transparent 60%); }
+  .event:hover::after { opacity:1; }
+  .event .top { display:flex; gap:14px; align-items:center; }
+  .datetile { flex:none; width:58px; height:62px; border-radius:18px; display:grid; place-content:center; text-align:center; color:#fff;
+    background:linear-gradient(150deg,hsl(var(--h) 85% 66%),hsl(calc(var(--h) + 40) 80% 52%));
+    box-shadow:0 8px 18px -6px hsl(var(--h) 80% 40% / .6), inset 0 1px 1px rgba(255,255,255,.7), inset 0 -2px 4px rgba(0,0,0,.12); }
+  .datetile b { font-size:24px; line-height:1; font-weight:800; letter-spacing:-.02em; }
+  .datetile span { font-size:12px; font-weight:700; margin-top:3px; opacity:.95; }
+  .event h3 { margin:0; font-size:19px; line-height:1.2; }
+  .event .venue { display:flex; align-items:center; gap:6px; margin-top:4px; }
+  .event .venue svg { flex:none; }
+  .event .foot { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:auto; padding-top:4px; flex-wrap:wrap; }
+  .price { font-size:22px; font-weight:800; letter-spacing:-.02em; }
+  .chip { display:inline-block; padding:4px 11px; border-radius:999px; font-size:12px; font-weight:650;
+    background:var(--row); box-shadow:inset 0 1px 1px var(--hi); color:var(--muted); }
+  .chip.low { color:var(--warn); background:color-mix(in srgb,var(--warn) 16%,transparent); }
+  .chip.out { color:var(--bad); background:color-mix(in srgb,var(--bad) 14%,transparent); }
+  .empty { grid-column:1/-1; text-align:center; padding:48px 20px; }
+
+  /* ───────── Register ───────── */
+  .narrow { max-width:520px; margin:0 auto; }
+  .summary { display:flex; gap:14px; align-items:center; margin-bottom:20px; padding:14px; border-radius:var(--r-md); background:var(--row); box-shadow:inset 0 1px 1px var(--hi); }
+  .summary .datetile { width:50px; height:54px; border-radius:16px; }
+  .summary .datetile b { font-size:20px; }
+
+  /* ───────── Ticket ───────── */
+  .ticket { text-align:center; max-width:380px; margin:10px auto; padding:30px 26px 26px; overflow:visible; }
+  .tick { width:60px; height:60px; margin:0 auto 14px; border-radius:50%; display:grid; place-items:center; color:#fff;
+    background:linear-gradient(150deg,#46e0a0,#12a574); box-shadow:0 10px 24px -6px rgba(18,165,116,.7), inset 0 1px 1px rgba(255,255,255,.7); }
+  .ticket .tear { position:relative; margin:22px -26px; border-top:2px dashed color-mix(in srgb,var(--muted) 45%,transparent); }
+  .ticket .tear::before, .ticket .tear::after { content:""; position:absolute; top:-15px; width:28px; height:28px; border-radius:50%;
+    background:var(--base); box-shadow:inset 0 2px 5px rgba(0,0,0,.18); }
+  .ticket .tear::before { left:-14px; } .ticket .tear::after { right:-14px; }
+  .qr { display:inline-block; padding:14px; background:#fff; border-radius:22px; box-shadow:0 10px 30px -8px rgba(40,30,120,.4); }
+  .ticket img { display:block; width:200px; height:200px; }
+  #t-code { display:inline-block; margin:16px 0 20px; padding:8px 16px; border-radius:12px; background:var(--row); box-shadow:inset 0 1px 1px var(--hi);
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:17px; letter-spacing:.06em; }
+
+  /* ───────── Login / admin ───────── */
+  .login { max-width:400px; margin:40px auto; }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin:16px 0 8px; }
+  .stat { padding:16px 18px; border-radius:var(--r-md); background:var(--row); box-shadow:inset 0 1px 1px var(--hi); }
+  .stat b { display:block; font-size:30px; font-weight:800; letter-spacing:-.03em; line-height:1.1; }
+  .tablewrap { overflow-x:auto; margin:10px -8px 0; padding:0 8px; }
+  table { width:100%; border-collapse:separate; border-spacing:0 6px; font-size:14px; min-width:700px; }
+  th { text-align:left; padding:6px 12px; font-size:12.5px; font-weight:650; color:var(--muted); }
+  td { text-align:left; padding:11px 12px; background:var(--row); vertical-align:middle; }
+  td:first-child { border-radius:14px 0 0 14px; font-weight:600; } td:last-child { border-radius:0 14px 14px 0; }
+  tr:hover td { background:var(--glass-strong); }
+  .badge-yes { color:var(--ok); font-weight:700; }
+  .formgrid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); column-gap:14px; }
+  .inline { display:flex; gap:10px; align-items:flex-start; flex-wrap:wrap; }
+  .inline input { flex:1; min-width:200px; margin:0; }
+
+
+  /* ───────── Teams, search, lists ───────── */
+  #p-search { margin-bottom:14px; }
+  .foot .chip { margin:4px 6px 0 0; }
+  .member { display:grid; grid-template-columns:1fr 1fr auto; gap:10px; align-items:start; }
+  .member input { margin:0 0 10px; }
+  .member button { margin-top:4px; }
+  button.small:disabled { opacity:.45; cursor:not-allowed; }
+  .teamline { font-weight:400; font-size:12.5px; color:var(--muted); margin-top:2px; line-height:1.35; }
+  @media (max-width:560px) { .member { grid-template-columns:1fr; } }
+
+  /* ───────── Scanner & copy ───────── */
+  .inline { align-items:center; }
+  .inline button.ghost, .inline .filebtn { margin:0; }
+  .filebtn { display:inline-flex; align-items:center; padding:9px 16px; border-radius:999px; font-size:14px; font-weight:600; cursor:pointer;
+    color:var(--ink); background:var(--glass-strong); border:1px solid rgba(255,255,255,.3);
+    box-shadow:0 2px 8px rgba(40,30,120,.12), inset 0 1px 1px var(--hi); transition:transform .15s, background .2s; }
+  .filebtn:hover { background:var(--glass); } .filebtn:active { transform:scale(.95); }
+  .filebtn input { display:none; }
+  .filebtn:focus-within { outline:3px solid color-mix(in srgb,var(--brand) 70%,#fff); outline-offset:2px; }
+  #scanner { margin-top:16px; }
+  #scan-video { display:block; width:100%; max-width:380px; aspect-ratio:4/3; object-fit:cover; margin-bottom:10px;
+    border-radius:var(--r-md); background:#000; box-shadow:var(--shadow), 0 0 0 3px var(--glass-strong); }
+  #scan-status { margin-top:10px; }
+  #scan-status:empty { display:none; }
+  .tcode { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:13.5px; letter-spacing:.04em; margin-right:8px; }
+
+
+  /* ───────── v3: posters, filters, tickets, judging, charts ───────── */
+  nav { flex-wrap:wrap; }
+  h4 { margin:18px 0 8px; font-size:14.5px; color:var(--muted); font-weight:650; }
+  .poster { margin:-20px -20px 2px; height:116px; display:grid; place-items:center; font-size:46px; background-size:cover; background-position:center;
+    background-image:linear-gradient(135deg,hsl(var(--h) 80% 70%),hsl(calc(var(--h) + 50) 75% 55%)); box-shadow:inset 0 -30px 40px -30px rgba(0,0,0,.25); }
+  .catbar { display:flex; gap:8px; flex-wrap:wrap; margin:-6px 0 20px; }
+  .catbar button.small { margin:0; padding:7px 15px; font-size:14px; }
+  button.small.on { color:#fff; background:linear-gradient(180deg,#7a63f2,#5441d6); border-color:transparent; }
+  .event .cat { margin-left:auto; align-self:flex-start; }
+  .event .actions { display:flex; gap:8px; flex-wrap:wrap; }
+  .event .actions button.small { margin:0; padding:9px 14px; }
+  .mt { display:grid; grid-template-columns:120px 1fr; gap:18px; align-items:start; }
+  .mt .qrbox { background:#fff; padding:8px; border-radius:16px; box-shadow:0 8px 22px -8px rgba(40,30,120,.4); }
+  .mt .qrbox img { display:block; width:104px; height:104px; }
+  .mt.dim { opacity:.6; }
+  .mt h3 { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .mt .row { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .mt a.filebtn { text-decoration:none; padding:6px 12px; font-size:13px; }
+  @media (max-width:560px) { .mt { grid-template-columns:1fr; } }
+  .scorefields { display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:10px; margin-top:12px; }
+  .scorefields input { margin:6px 0 0; }
+  .teamcard .head { display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:baseline; }
+  .hbar { display:grid; grid-template-columns:minmax(80px,140px) 1fr 64px; gap:10px; align-items:center; margin:9px 0; font-size:13.5px; }
+  .hbar > span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:600; }
+  .hbar b { text-align:right; }
+  .track { height:12px; border-radius:999px; background:var(--row); box-shadow:inset 0 1px 2px rgba(0,0,0,.1); overflow:hidden; }
+  .fill { height:100%; border-radius:999px; background:linear-gradient(90deg,var(--brand),var(--brand-2)); }
+  tr.cancelled td { opacity:.5; }
+  .medal { font-size:20px; }
+  dialog.card { position:fixed; inset:0; margin:auto; height:fit-content; width:calc(100% - 32px); max-width:420px; color:var(--ink); border:0; }
+  dialog::backdrop { background:rgba(10,8,30,.45); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); }
+  #coupon-msg:empty, #my-msg:empty, #j-msg:empty { display:none; }
+
+
+  /* ───────── v4: seats and food ───────── */
+  .seatwrap { margin:10px 0 6px; }
+  .screen { text-align:center; font-size:11.5px; font-weight:700; letter-spacing:.35em; padding:7px; margin:4px auto 12px; max-width:420px;
+    border-radius:0 0 50% 50% / 0 0 24px 24px; color:var(--muted); background:linear-gradient(180deg,rgba(139,92,246,.35),transparent); }
+  .seatscroll { overflow-x:auto; padding:4px 2px 10px; }
+  .seatrow { display:flex; gap:6px; align-items:center; margin:6px auto; width:max-content; }
+  .seatrow .rl { width:20px; text-align:center; font-size:12px; font-weight:700; color:var(--muted); }
+  .seat { width:30px; height:30px; min-width:0; padding:0; margin:0; border-radius:9px 9px 5px 5px; font-size:11px; font-weight:700; cursor:pointer;
+    color:var(--ink); background:var(--glass-strong); border:1px solid rgba(255,255,255,.55); box-shadow:0 2px 6px rgba(40,30,120,.15), inset 0 1px 1px var(--hi); }
+  .seat:hover:not(:disabled) { transform:translateY(-2px); }
+  .seat.sel { color:#fff; border-color:transparent; background:linear-gradient(180deg,#7a63f2,#5441d6); }
+  .seat.taken { cursor:not-allowed; color:transparent; opacity:.55; background:rgba(120,120,140,.4); box-shadow:none; }
+  .seat.booked { color:#fff; border-color:transparent; background:linear-gradient(180deg,#f472b6,#db2777); }
+  .seat.in { color:#fff; border-color:transparent; background:linear-gradient(180deg,#34d399,#059669); }
+  .legend { display:flex; gap:16px; flex-wrap:wrap; justify-content:center; font-size:12.5px; color:var(--muted); }
+  .legend i { display:inline-block; width:14px; height:14px; border-radius:5px; margin-right:6px; vertical-align:-2px; }
+  .seatchip { display:inline-flex; gap:8px; align-items:center; margin:2px 0 6px; padding:8px 16px; border-radius:999px; font-weight:750; color:#fff;
+    background:linear-gradient(180deg,#7a63f2,#5441d6); box-shadow:0 8px 20px -8px rgba(84,65,214,.6); }
+  .menu { display:grid; gap:8px; margin-top:14px; }
+  .mrow { display:grid; grid-template-columns:1fr auto; gap:12px; align-items:center; padding:10px 14px; border-radius:14px; background:var(--row); box-shadow:inset 0 1px 1px var(--hi); }
+  .mrow.off { opacity:.55; }
+  .qty { display:inline-flex; align-items:center; gap:10px; }
+  .qty button { width:32px; height:32px; padding:0; margin:0; border-radius:50%; font-size:18px; line-height:1; }
+  .qty b { min-width:18px; text-align:center; }
+  .cartbar { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-top:14px; }
+  .stall h3 { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .steps { display:flex; gap:6px; flex-wrap:wrap; margin:10px 0; }
+  .steps span { padding:5px 12px; border-radius:999px; font-size:12.5px; font-weight:650; background:var(--row); color:var(--muted); }
+  .steps span.done { background:rgba(52,211,153,.28); color:#047857; }
+  .steps span.now { color:#fff; background:linear-gradient(180deg,#7a63f2,#5441d6); }
+  .pickup { font:800 28px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; letter-spacing:.08em; margin:2px 0; }
+  dialog.wide { max-width:460px; max-height:calc(100% - 32px); overflow:auto; }
+  #food-msg:empty, #fo-msg:empty, #fs-msg:empty, #sm-msg:empty { display:none; }
+
+  /* ───────── Fallbacks & preferences ───────── */
+  @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
+    .glass, .card, header { background:color-mix(in srgb,var(--base) 80%,#fff 20%); }
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    :root { --glass:color-mix(in srgb,var(--base) 78%,#fff); --glass-strong:color-mix(in srgb,var(--base) 65%,#fff); --field:color-mix(in srgb,var(--base) 80%,#fff); }
+    .glass, .card, header, input, .msg { -webkit-backdrop-filter:none; backdrop-filter:none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .orb { animation:none; } section { animation:none; } .event, button { transition:none; }
+  }
+  @media (max-width:560px) {
+    header { border-radius:28px; padding:12px 12px 12px 16px; }
+    nav { width:100%; } nav button { flex:1; padding:9px 10px; }
+    .card { padding:18px; border-radius:24px; }
+  }
+</style>
+</head>
+<body>
+<!-- Reusable NIE College Crest Symbol -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="nie-crest" viewBox="0 0 200 220">
+      <!-- Shield -->
+      <path d="M100 10 C 80 32, 48 36, 22 26 C 22 115, 42 162, 100 210 C 158 162, 178 115, 178 26 C 152 36, 120 32, 100 10 Z"
+            fill="#ffffff" stroke="#242763" stroke-width="8" stroke-linejoin="round"/>
+      <!-- 3 Navy Stars -->
+      <polygon points="100,25 103,32 110,32 104,36 106,43 100,39 94,43 96,36 90,32 97,32" fill="#242763"/>
+      <polygon points="44,44 47,51 54,51 48,55 50,62 44,58 38,62 40,55 34,51 41,51" fill="#242763"/>
+      <polygon points="156,44 159,51 166,51 160,55 162,62 156,58 150,62 152,55 146,51 153,51" fill="#242763"/>
+      <!-- Red 16-Tooth Gear -->
+      <g transform="translate(100,96)">
+        <g fill="#b51f1f">
+          <rect x="-6" y="-48" width="12" height="96" rx="2"/>
+          <rect x="-6" y="-48" width="12" height="96" rx="2" transform="rotate(22.5)"/>
+          <rect x="-6" y="-48" width="12" height="96" rx="2" transform="rotate(45)"/>
+          <rect x="-6" y="-48" width="12" height="96" rx="2" transform="rotate(67.5)"/>
+          <rect x="-6" y="-48" width="12" height="96" rx="2" transform="rotate(90)"/>
+          <rect x="-6" y="-48" width="12" height="96" rx="2" transform="rotate(112.5)"/>
+          <rect x="-6" y="-48" width="12" height="96" rx="2" transform="rotate(135)"/>
+          <rect x="-6" y="-48" width="12" height="96" rx="2" transform="rotate(157.5)"/>
+        </g>
+        <circle r="39" fill="#b51f1f"/>
+        <circle r="31" fill="#ffffff"/>
+        <!-- Inner Emblem Circle (Bridge, Pylons & Water) -->
+        <circle r="27" fill="#bce4fa" stroke="#242763" stroke-width="3"/>
+        <path d="M-24 6 Q-12 -6 0 6 Q12 -6 24 6 M-25 6 L25 6 M-12 -5 L-12 10 M12 -5 L12 10" stroke="#242763" stroke-width="1.6" fill="none"/>
+        <path d="M5 -16 L2 6 M5 -16 L8 6 M0 -11 L10 -11 M1 -5 L9 -5" stroke="#242763" stroke-width="1.2" fill="none"/>
+        <path d="M-16 12 Q-8 10 0 12 Q8 14 16 12 M-12 17 Q-4 15 4 17 Q12 19 16 17" stroke="#242763" stroke-width="1.1" fill="none"/>
+      </g>
+      <!-- NIE Lettering -->
+      <path d="M72 146 L72 182 L78 182 L78 159 L90 184 L96 184 L96 148 L90 148 L90 171 L78 146 Z" fill="#242763"/>
+      <rect x="99" y="150" width="6" height="44" fill="#242763"/>
+      <path d="M108 148 L128 148 L128 154 L114 154 L114 164 L125 164 L125 170 L114 170 L114 180 L128 180 L128 186 L108 186 Z" fill="#242763"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="bg" aria-hidden="true"><i class="orb a"></i><i class="orb b"></i><i class="orb c"></i><i class="orb d"></i></div>
+
+<header>
+  <h1>
+    <!-- Logo beside "College Fest Tickets" -->
+    <span class="logo" aria-hidden="true">
+      <svg><use href="#nie-crest"/></svg>
+    </span>
+    NIE Festiva
+  </h1>
+  <nav aria-label="Main">
+    <button id="nav-events" class="active">Events</button>
+    <button id="nav-food">Food</button>
+    <button id="nav-my" class="hidden">Student dashboard</button>
+    <button id="nav-judge" class="hidden">Judge</button>
+    <button id="nav-admin" class="hidden">Admin</button>
+    <button id="nav-login">Log in</button>
+    <button id="nav-logout" class="hidden">Logout</button>
+  </nav>
+</header>
+
+<main>
+  <!-- Step 1: browse -->
+  <section id="view-events">
+    <div class="hero">
+      <!-- Logo centered in the middle -->
+      <div class="hero-logo-wrap" aria-hidden="true">
+        <svg><use href="#nie-crest"/></svg>
+      </div>
+      <h2>Your campus. Your fest. Your moment.</h2>
+      <p>Discover events, reserve your place, and keep every fest moment in one place.</p>
+    </div>
+    <input id="search" type="search" placeholder="Search events" aria-label="Search events">
+    <div id="catbar" class="catbar" aria-label="Filter by category"></div>
+    <div id="events" class="grid"></div>
+  </section>
+
+  <!-- Step 2: register -->
+  <section id="view-register" class="hidden">
+    <div class="narrow">
+      <button class="ghost" onclick="show('events')">← Back to events</button>
+      <div class="card">
+        <div class="summary">
+          <div class="datetile" id="reg-date" aria-hidden="true"></div>
+          <div>
+            <h2 id="reg-title" style="font-size:22px;margin:0"></h2>
+            <p class="muted" id="reg-info" style="margin:2px 0 0"></p>
+          </div>
+        </div>
+        <div id="team-name-wrap" class="hidden"><label>Team name<input id="team-name" autocomplete="off" placeholder="e.g. Code Ninjas"></label></div>
+        <label><span id="name-label">Your name</span><input id="name" autocomplete="name"></label>
+        <label>Email<input id="email" type="email" autocomplete="email"></label>
+        <div id="team-wrap" class="hidden">
+          <h3 style="margin-top:4px">Team members</h3>
+          <p class="muted" id="team-hint" style="margin:0 0 12px"></p>
+          <div id="member-rows"></div>
+          <button class="ghost" id="add-member" type="button">+ Add team member</button>
+        </div>
+        <div id="seat-wrap" class="hidden seatwrap">
+          <h3 style="margin:6px 0 4px">Choose your seats</h3>
+          <p class="muted" id="seat-hint" style="margin:0 0 8px"></p>
+          <div class="screen">STAGE / FRONT</div>
+          <div class="seatscroll"><div id="seatmap"></div></div>
+          <div class="legend"><span><i style="background:var(--glass-strong);border:1px solid #b9b9d6"></i>Free</span><span><i style="background:#6a55e8"></i>Yours</span><span><i style="background:rgba(120,120,140,.5)"></i>Taken</span></div>
+          <button class="ghost" id="seat-auto" type="button" style="margin-top:12px">Pick the best seats for me</button>
+        </div>
+        <div class="inline">
+          <input id="coupon" placeholder="Coupon code (optional)" aria-label="Coupon code" autocomplete="off">
+          <button class="ghost" id="coupon-btn" type="button">Apply</button>
+        </div>
+        <div id="coupon-msg" aria-live="polite"></div>
+        <button class="primary" id="pay-btn" style="width:100%;margin-top:16px">Pay &amp; get ticket</button>
+        <p class="muted" style="text-align:center;font-size:12px;margin:9px 0 0">Secure checkout powered by Razorpay. Your payment details are handled by Razorpay.</p>
+        <div id="reg-msg" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Step 3: ticket -->
+  <section id="view-ticket" class="hidden">
+    <div class="card ticket">
+      <div class="tick" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
+      <h2>You're in!</h2>
+      <p id="t-info" class="muted" style="margin:0"></p>
+      <div id="t-seats" class="seatchip hidden"></div>
+      <div class="tear"></div>
+      <div class="qr"><img id="t-qr" alt="QR code for your ticket"></div>
+      <div><b id="t-code"></b></div>
+      <p id="t-note" class="muted" style="margin:0 0 16px"></p>
+      <div class="inline" style="justify-content:center">
+        <button class="ghost" id="t-cal" type="button" style="margin:0">Add to calendar</button>
+        <button class="primary" onclick="show('events')">Browse more events</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Login / sign up -->
+  <section id="view-login" class="hidden">
+    <div class="card login">
+      <h2 id="auth-title">Log in</h2>
+      <p class="muted" style="margin:0 0 18px">Sign in to your student dashboard. You must be logged in before registering or paying. Judges and organizers use their assigned accounts.</p>
+      <label id="l-name-wrap" class="hidden">Your name<input id="l-name" autocomplete="name"></label>
+      <label><span id="l-user-label">Email or username</span><input id="l-user" autocomplete="username"></label>
+      <label>Password<input id="l-pass" type="password" autocomplete="current-password"></label>
+      <button class="primary" id="login-btn" style="width:100%">Log in</button>
+      <button class="ghost" id="auth-toggle" type="button" style="margin:14px 0 0">Create a student account</button>
+      <div id="login-msg" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- Food stalls -->
+  <section id="view-food" class="hidden stack">
+    <div class="card"><h2>Food stalls</h2>
+      <p class="muted" style="margin:0 0 14px">Pre-order and pay now, then pick up without queuing. We email you when it is ready. Add your ticket code to get it delivered to your seat.</p>
+      <div class="inline"><input id="track-code" placeholder="Track an order: enter your pickup code" aria-label="Pickup code" autocomplete="off">
+        <button class="ghost" id="track-btn" type="button">Track</button></div>
+      <div id="food-msg" aria-live="polite"></div></div>
+    <div id="track-result"></div>
+    <div id="my-orders-card" class="hidden stack"><h3 style="margin:6px 4px 0">Your orders</h3><div id="my-orders" class="stack"></div></div>
+    <div id="stalls" class="grid"></div>
+  </section>
+
+  <!-- My tickets -->
+  <section id="view-my" class="hidden stack">
+    <div class="card"><p class="eyebrow">STUDENT PORTAL</p><h2 id="student-welcome">Student dashboard</h2>
+      <p class="muted" id="student-account" style="margin:0 0 12px"></p>
+      <div class="inline"><button class="primary" type="button" onclick="show('events')">Explore events</button><button class="ghost" type="button" onclick="show('food')">Food &amp; orders</button></div>
+      <div id="my-msg" aria-live="polite"></div></div>
+    <div class="card"><h2>My tickets</h2><p class="muted" style="margin:0">Your registrations, payment details and QR tickets are kept here.</p></div>
+    <div class="card stack" id="student-tools">
+      <h2>My fest tools</h2>
+      <div class="formgrid">
+        <div><h3>Profile</h3><label>Display name<input id="profile-name" autocomplete="name"></label><button class="ghost" id="profile-save" type="button">Save profile</button><div id="profile-msg" aria-live="polite"></div></div>
+        <div><h3>Wishlist</h3><label>Event<select id="wish-event"></select></label><div class="inline"><button class="ghost" id="wish-add" type="button">♡ Save event</button><button class="ghost" id="wish-load" type="button">Refresh wishlist</button></div><div id="wish-list" class="muted"></div></div>
+        <div><h3>Event feedback</h3><label>Event<select id="feedback-event"></select></label><label>Rating<select id="feedback-rating"><option value="5">5 - Excellent</option><option value="4">4 - Very good</option><option value="3">3 - Good</option><option value="2">2 - Fair</option><option value="1">1 - Needs improvement</option></select></label><label>Comment<input id="feedback-comment" maxlength="2000" placeholder="Share your feedback"></label><button class="ghost" id="feedback-send" type="button">Submit feedback</button><div id="feedback-msg" aria-live="polite"></div></div>
+        <div><h3>Notifications</h3><button class="ghost" id="notify-load" type="button">Load announcements</button><div id="notify-list" class="stack"></div></div>
+      </div>
+    </div>
+    <div id="my-list" class="stack"></div>
+  </section>
+
+  <!-- Judge panel -->
+  <section id="view-judge" class="hidden stack">
+    <div class="card"><h2>Judge panel</h2><p class="muted" style="margin:0 0 12px">Score every team from 0 to 10 on each criterion. You can change your scores any time.</p>
+      <label>Event<select id="j-event"></select></label><div id="j-msg" aria-live="polite"></div></div>
+    <div id="j-teams" class="stack"></div>
+  </section>
+
+  <!-- Leaderboard -->
+  <section id="view-board" class="hidden stack">
+    <button class="ghost" onclick="show('events')">← Back to events</button>
+    <div class="card"><h2 id="b-title">Leaderboard</h2><p class="muted" id="b-sub" style="margin:0"></p>
+      <div class="tablewrap"><table><thead id="b-head"></thead><tbody id="b-body"></tbody></table></div></div>
+  </section>
+
+  <!-- Admin (needs login) -->
+  <section id="view-admin" class="hidden stack">
+    <div class="card">
+      <h2>Organizer dashboard</h2>
+      <div id="totals" class="stats"></div>
+      <div id="remind-msg" aria-live="polite"></div>
+      <div class="tablewrap">
+        <table><thead><tr><th>Event</th><th>Type</th><th>Registered</th><th>Spots left</th><th>Waitlist</th><th>Revenue</th><th>Actions</th></tr></thead>
+        <tbody id="stats"></tbody></table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="inline" style="justify-content:space-between"><h3 style="margin:0">Analytics</h3>
+        <button class="ghost" id="export-btn" type="button">Download CSV</button></div>
+      <h4>Registrations in the last 14 days</h4><div id="chart-days"></div>
+      <div class="formgrid"><div><h4>Revenue per event</h4><div id="chart-rev"></div></div>
+        <div><h4>Check-in rate</h4><div id="chart-checkin"></div></div></div>
+      <p class="muted" id="analytics-note" style="margin:10px 0 0"></p>
+    </div>
+    <div class="card hidden" id="participants-card">
+      <h3 id="p-title">Participants</h3>
+      <div class="muted" id="p-count" style="margin-bottom:12px"></div>
+      <input id="p-search" type="search" placeholder="Search by name, team, email or code" aria-label="Search participants">
+      <div class="tablewrap">
+        <table><thead><tr><th>Name / Team</th><th>Email</th><th>Seats</th><th>Code</th><th>Status</th><th>Reminders</th></tr></thead>
+        <tbody id="participants"></tbody></table>
+      </div>
+    </div>
+    <div class="card hidden" id="seatmap-card">
+      <div class="inline" style="justify-content:space-between"><h3 id="sm-title" style="margin:0">Seat map</h3>
+        <button class="small" type="button" onclick="$('seatmap-card').classList.add('hidden')" style="margin:0">Close</button></div>
+      <p class="muted" id="sm-count" style="margin:6px 0 0"></p>
+      <div class="screen">STAGE / FRONT</div>
+      <div class="seatscroll"><div id="admin-seatmap"></div></div>
+      <div class="legend"><span><i style="background:var(--glass-strong);border:1px solid #b9b9d6"></i>Free</span><span><i style="background:#db2777"></i>Booked</span><span><i style="background:#059669"></i>Checked in</span></div>
+      <p id="sm-detail" class="muted" style="text-align:center;min-height:22px"></p>
+      <h4>Move a ticket to other seats</h4>
+      <div class="formgrid">
+        <label>Ticket code<input id="sm-code" autocomplete="off"></label>
+        <label>New seats (for example B4 or B4, B5)<input id="sm-seats" autocomplete="off"></label>
+      </div>
+      <button class="primary" id="sm-move" type="button">Allot seats</button>
+      <div id="sm-msg" aria-live="polite"></div>
+    </div>
+    <div class="card" id="food-orders-card">
+      <div class="inline" style="justify-content:space-between"><h3 style="margin:0">Food orders <span class="muted" id="fo-count"></span></h3>
+        <button class="small" id="fo-toggle" type="button" style="margin:0">Show finished orders</button></div>
+      <div class="inline" style="margin-top:12px"><input id="fo-code" placeholder="Pickup code" aria-label="Pickup code" autocomplete="off">
+        <button class="primary" id="fo-collect" type="button">Mark collected</button></div>
+      <div id="fo-msg" aria-live="polite"></div>
+      <div class="tablewrap"><table style="min-width:760px"><thead><tr><th>Code</th><th>Customer</th><th>Stall</th><th>Items</th><th>Total</th><th>Deliver to</th><th>Status</th><th></th></tr></thead>
+        <tbody id="fo-body"></tbody></table></div>
+    </div>
+    <div class="card">
+      <h3>Check in a guest</h3>
+      <div class="inline">
+        <input id="checkin-code" placeholder="Ticket code" aria-label="Ticket code">
+        <button class="primary" id="checkin-btn">Check in</button>
+        <button class="ghost" id="scan-btn" type="button">Scan QR with camera</button>
+        <label class="filebtn">Scan from photo<input type="file" id="scan-file" accept="image/*" capture="environment"></label>
+      </div>
+      <div id="scanner" class="hidden">
+        <video id="scan-video" playsinline muted></video>
+        <button class="small" id="scan-stop" type="button">Stop scanning</button>
+      </div>
+      <div id="scan-status" class="muted" aria-live="polite"></div>
+      <div id="checkin-msg" aria-live="polite"></div>
+    </div>
+    <div class="card">
+      <h3>Checked-in list <span class="muted" id="ci-count"></span></h3>
+      <div class="tablewrap">
+        <table><thead><tr><th>Name</th><th>Team</th><th>Event</th><th>Seat</th><th>Time</th></tr></thead>
+        <tbody id="checkins"></tbody></table>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Add event</h3>
+      <div class="formgrid">
+        <label>Name<input id="n-name"></label>
+        <label>Venue<input id="n-venue"></label>
+        <label>Date<input id="n-date" type="date"></label>
+        <label>Category<select id="n-cat"><option>General</option><option>Technical</option><option>Cultural</option><option>Sports</option><option>Workshop</option></select></label>
+        <label>Poster image link (optional)<input id="n-img" placeholder="https://..."></label>
+        <label>Participation<select id="n-type"><option value="solo">Individual</option><option value="team">Team</option></select></label>
+        <label id="n-min-wrap" class="hidden">Minimum team size<input id="n-min" type="number" min="1" max="20" value="2"></label>
+        <label id="n-max-wrap" class="hidden">Maximum team size<input id="n-max" type="number" min="1" max="20" value="4"></label>
+        <label>Seat selection<select id="n-seat"><option value="no">No seat map</option><option value="yes">Students choose seats</option></select></label>
+        <label id="n-rows-wrap" class="hidden">Rows (1 to 26)<input id="n-rows" type="number" min="1" max="26" value="8"></label>
+        <label id="n-cols-wrap" class="hidden">Seats per row (1 to 40)<input id="n-cols" type="number" min="1" max="40" value="12"></label>
+        <label><span id="price-label">Price (₹)</span><input id="n-price" type="number" min="0" placeholder="0"></label>
+        <label><span id="cap-label">Capacity</span><input id="n-cap" type="number" min="1" placeholder="100"></label>
+      </div>
+      <button class="primary" id="add-btn">Create event</button>
+      <div id="add-msg" aria-live="polite"></div>
+    </div>
+    <div class="card">
+      <h3>Coupon codes</h3>
+      <div class="formgrid">
+        <label>Code<input id="c-code" placeholder="EARLY20" autocomplete="off"></label>
+        <label>Discount (%)<input id="c-pct" type="number" min="1" max="100" value="10"></label>
+        <label>Maximum uses (optional)<input id="c-max" type="number" min="1"></label>
+      </div>
+      <button class="primary" id="c-add">Create coupon</button>
+      <div id="c-msg" aria-live="polite"></div>
+      <div class="tablewrap"><table style="min-width:420px"><thead><tr><th>Code</th><th>Discount</th><th>Used</th><th></th></tr></thead><tbody id="coupons"></tbody></table></div>
+    </div>
+    <div class="card">
+      <h3>Judges</h3>
+      <p class="muted" style="margin:0 0 12px">Judges log in with their email on the Log in page and score the teams. A demo judge (judge@fest.com / judge123) is created automatically. Delete it before a real event.</p>
+      <div class="formgrid">
+        <label>Name<input id="jg-name"></label>
+        <label>Email<input id="jg-email" type="email"></label>
+        <label>Password (6+ characters)<input id="jg-pass" type="text" autocomplete="off"></label>
+      </div>
+      <button class="primary" id="jg-add">Add judge</button>
+      <div id="jg-msg" aria-live="polite"></div>
+      <div class="tablewrap"><table style="min-width:420px"><thead><tr><th>Name</th><th>Email</th><th></th></tr></thead><tbody id="judges"></tbody></table></div>
+    </div>
+    <div class="card">
+      <h3>Food stalls and menus</h3>
+      <div id="fs-list" class="stack"></div>
+      <h4>Add a stall</h4>
+      <div class="formgrid">
+        <label>Stall name<input id="fs-name" placeholder="Biryani Point"></label>
+        <label>Emoji (optional)<input id="fs-emoji" placeholder="🍛" maxlength="4"></label>
+        <label>Short description<input id="fs-desc" placeholder="Hot, fresh biryani"></label>
+      </div>
+      <button class="primary" id="fs-add" type="button">Add stall</button>
+      <h4>Add a menu item</h4>
+      <div class="formgrid">
+        <label>Stall<select id="fi-stall"></select></label>
+        <label>Item name<input id="fi-name" placeholder="Masala dosa"></label>
+        <label>Price (₹)<input id="fi-price" type="number" min="0" value="50"></label>
+        <label>Stock (blank = unlimited)<input id="fi-stock" type="number" min="0"></label>
+      </div>
+      <button class="primary" id="fi-add" type="button">Add item</button>
+      <div id="fs-msg" aria-live="polite"></div>
+    </div>
+  </section>
+</main>
+
+<dialog id="food-dialog" class="card wide" aria-labelledby="fd-title">
+  <h3 id="fd-title">Your order</h3>
+  <div id="fd-form">
+    <div id="fd-summary" style="margin-bottom:12px"></div>
+    <label>Your name<input id="fd-name" autocomplete="name"></label>
+    <label>Email<input id="fd-email" type="email" autocomplete="email"></label>
+    <label>Ticket code (optional, so we know your seat)<input id="fd-ticket" autocomplete="off"></label>
+    <label>Note for the stall (optional)<input id="fd-note" maxlength="200" placeholder="Less spicy, no onions..."></label>
+    <div class="inline"><button class="primary" id="fd-pay" type="button">Pay and place order</button>
+      <button class="ghost" id="fd-cancel" type="button" style="margin:0">Cancel</button></div>
+    <p class="muted" style="font-size:12px;margin:8px 0 0">Secure checkout powered by Razorpay.</p>
+    <div id="fd-msg" aria-live="polite"></div>
+  </div>
+  <div id="fd-done" class="hidden"></div>
+</dialog>
+
+<dialog id="wl-dialog" class="card" aria-labelledby="wl-title">
+  <h3 id="wl-title">Join the waitlist</h3>
+  <p class="muted" style="margin:0 0 14px">This event is full. We will email you if a spot opens up.</p>
+  <label>Your name<input id="wl-name" autocomplete="name"></label>
+  <label>Email<input id="wl-email" type="email" autocomplete="email"></label>
+  <div class="inline"><button class="primary" id="wl-join" type="button">Join waitlist</button>
+    <button class="ghost" id="wl-cancel" type="button" style="margin:0">Cancel</button></div>
+  <div id="wl-msg" aria-live="polite"></div>
+</dialog>
+
+<script>
+const API = "/api";
+let current = null;
+const $ = id => document.getElementById(id);
+
+let token = sessionStorage.getItem("token");
+let role = sessionStorage.getItem("role") || "";
+let uname = sessionStorage.getItem("uname") || "";
+let uemail = sessionStorage.getItem("uemail") || "";
+const esc = t => String(t).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const detail = (d, fallback) => (d && typeof d.detail === "string") ? d.detail : fallback;
+
+function authFetch(url, opts = {}){
+  opts.headers = Object.assign({}, opts.headers, {Authorization: "Bearer " + token});
+  return fetch(url, opts).then(r => { if (r.status === 401) { logout(true); } return r; });
+}
+const jsonHeaders = () => Object.assign({"Content-Type": "application/json"}, token ? {Authorization: "Bearer " + token} : {});
+
+async function razorpayCheckout(amount, email, description) {
+  if (!amount || amount <= 0) return {razorpay_order_id:"", razorpay_payment_id:"", razorpay_signature:""};
+  if (!window.Razorpay) throw new Error("Razorpay Checkout could not load. Check your internet connection and try again.");
+  const orderResponse = await fetch(`${API}/payments/order`, {method:"POST", headers:jsonHeaders(),
+    body:JSON.stringify({amount, email, receipt:`fest-${Date.now()}`})});
+  const order = await orderResponse.json().catch(()=>({}));
+  if (!orderResponse.ok) throw new Error(detail(order, "Unable to start secure checkout"));
+  return await new Promise((resolve,reject)=>{
+    const checkout = new Razorpay({key:order.key_id, amount:order.amount, currency:order.currency,
+      name:"Festiva College Fest", description, order_id:order.id,
+      prefill:{email}, theme:{color:"#6254dc"},
+      handler: response => resolve({razorpay_order_id:response.razorpay_order_id,
+        razorpay_payment_id:response.razorpay_payment_id, razorpay_signature:response.razorpay_signature}),
+      modal:{ ondismiss:()=>reject(new Error("Payment window closed. No booking was created.")) }
+    });
+    checkout.on("payment.failed", response=>reject(new Error(response.error?.description || "Payment was not completed")));
+    checkout.open();
+  });
+}
+
+function updateNav(){
+  $("nav-login").classList.toggle("hidden", !!token);
+  $("nav-logout").classList.toggle("hidden", !token);
+  $("nav-admin").classList.toggle("hidden", !(role === "admin" || role === "organizer"));
+  $("nav-judge").classList.toggle("hidden", role !== "judge");
+  $("nav-my").classList.toggle("hidden", !token || role !== "student");
+}
+function saveSession(d){
+  token = d.token; role = d.role; uname = d.name || ""; uemail = d.email || "";
+  sessionStorage.setItem("token", token); sessionStorage.setItem("role", role);
+  sessionStorage.setItem("uname", uname); sessionStorage.setItem("uemail", uemail);
+  updateNav();
+}
+function logout(expired){
+  stopScan();
+  token = null; role = ""; uname = ""; uemail = "";
+  ["token","role","uname","uemail"].forEach(k => sessionStorage.removeItem(k));
+  updateNav(); show(expired ? "login" : "events");
+}
+
+const VIEWS = ["events","register","ticket","login","admin","my","judge","board","food"];
+let pendingEvent = null, pendingWaitlist = false;
+let boardTimer = null, foodTimer = null, adminTimer = null;
+function show(name){
+  if (name === "admin" && !(role === "admin" || role === "organizer")) name = "login";
+  if (name === "my" && (!token || role !== "student")) name = "login";
+  if (name === "register" && (!token || role !== "student")) name = "login";
+  if (name === "judge" && role !== "judge") name = "login";
+  if (name !== "admin") stopScan();
+  if (name !== "board" && boardTimer) { clearInterval(boardTimer); boardTimer = null; }
+  if (name !== "food" && foodTimer) { clearInterval(foodTimer); foodTimer = null; }
+  if (name !== "admin" && adminTimer) { clearInterval(adminTimer); adminTimer = null; }
+  for (const v of VIEWS) $("view-"+v).classList.toggle("hidden", v !== name);
+  const navFor = {events:"events", register:"events", ticket:"events", board:"events", food:"food", login:"login", admin:"admin", my:"my", judge:"judge"}[name];
+  for (const n of ["events","food","my","judge","admin","login"]) $("nav-"+n).classList.toggle("active", n === navFor);
+  window.scrollTo({top:0, behavior:"smooth"});
+  if (name === "events") loadEvents();
+  if (name === "admin") {
+    loadStats(); loadCheckins(); loadAnalytics(); loadCoupons(); loadJudges(); loadFoodOrders(); loadStallAdmin();
+    adminTimer = setInterval(loadFoodOrders, 5000);
+  }
+  if (name === "food") { loadFood(); foodTimer = setInterval(refreshFood, 5000); }
+  if (name === "my") { loadMyTickets(); loadStudentTools(); }
+  if (name === "judge") loadJudgeEvents();
+}
+$("nav-events").onclick = () => show("events");
+$("nav-food").onclick = () => show("food");
+$("nav-my").onclick = () => show("my");
+$("nav-judge").onclick = () => show("judge");
+$("nav-admin").onclick = () => show("admin");
+$("nav-login").onclick = () => show("login");
+$("nav-logout").onclick = () => logout(false);
+
+let signupMode = false;
+function setAuthMode(on){
+  signupMode = on;
+  $("auth-title").textContent = on ? "Create a student account" : "Log in";
+  $("l-name-wrap").classList.toggle("hidden", !on);
+  $("l-user-label").textContent = on ? "Email" : "Email or username";
+  $("login-btn").textContent = on ? "Sign up" : "Log in";
+  $("auth-toggle").textContent = on ? "I already have an account" : "Create a student account";
+  $("login-msg").innerHTML = "";
+}
+$("auth-toggle").onclick = () => setAuthMode(!signupMode);
+$("login-btn").onclick = async () => {
+  const user = $("l-user").value.trim(), pass = $("l-pass").value;
+  const body = signupMode ? {name: $("l-name").value.trim(), email: user, password: pass} : {username: user, password: pass};
+  const r = await fetch(`${API}${signupMode ? "/auth/signup" : "/auth/login"}`, {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body)});
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) { $("login-msg").innerHTML = `<div class="msg err">${esc(detail(d, "Please check the details and try again"))}</div>`; return; }
+  saveSession(d);
+  $("l-pass").value = ""; setAuthMode(false);
+  if (d.role === "admin") show("admin");
+  else if (d.role === "judge") show("judge");
+  else if (pendingEvent) { const next = pendingEvent, waitlist = pendingWaitlist; pendingEvent = null; pendingWaitlist = false; waitlist ? openWaitlist(next) : openRegister(next); }
+  else show("my");
+};
+$("l-pass").onkeydown = e => { if (e.key === "Enter") $("login-btn").click(); };
+
+/* ── helpers for the visual layer ── */
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function dateTile(dateStr){
+  const d = new Date(dateStr + "T00:00:00");
+  if (isNaN(d)) return `<b>★</b>`;
+  return `<b>${d.getDate()}</b><span>${MONTHS[d.getMonth()]}</span>`;
+}
+const hue = id => (Number(id) * 47 + 230) % 360;   // gives every event its own tint
+const PIN = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
+
+const sizeLabel = e => e.min_team_size === e.max_team_size ? `${e.max_team_size}` : `${e.min_team_size}–${e.max_team_size}`;
+
+const EMOJI = {Technical:"💻", Cultural:"🎭", Sports:"🏅", Workshop:"🛠️", General:"🎉"};
+let allEvents = [], catFilter = "All";
+
+async function loadEvents(){
+  const r = await fetch(`${API}/events?q=${encodeURIComponent($("search").value)}`);
+  allEvents = await r.json();
+  renderCats(); renderEvents();
+}
+
+function renderCats(){
+  const cats = ["All", ...new Set(allEvents.map(e => e.category || "General"))];
+  if (!cats.includes(catFilter)) catFilter = "All";
+  $("catbar").innerHTML = "";
+  cats.forEach(c => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "small" + (c === catFilter ? " on" : "");
+    b.textContent = c === "All" ? "All" : `${EMOJI[c] || "🎉"} ${c}`;
+    b.onclick = () => { catFilter = c; renderCats(); renderEvents(); };
+    $("catbar").appendChild(b);
+  });
+}
+
+function renderEvents(){
+  const list = allEvents.filter(e => catFilter === "All" || (e.category || "General") === catFilter);
+  $("events").innerHTML = list.length ? "" : "<div class='card empty'><h3>No events found</h3><p class='muted' style='margin:0'>Try a different search or category, or check back soon.</p></div>";
+  for (const e of list){
+    const isTeam = e.max_team_size > 1, cat = e.category || "General";
+    const d = document.createElement("div"); d.className = "card event"; d.style.setProperty("--h", hue(e.id));
+    const kind = `<span class="chip">${isTeam ? "Team of " + sizeLabel(e) : "Individual"}</span>` + (e.seat_rows > 0 ? '<span class="chip">💺 Pick your seat</span>' : "");
+    const status = e.seats_left <= 0 ? `<span class="chip out">${isTeam ? "No team spots left" : "No seats left"}</span>`
+                 : e.seats_left <= 10 ? `<span class="chip low">Only ${e.seats_left} left</span>`
+                 : `<span class="chip">${e.seats_left} ${isTeam ? "team spots" : "seats"} left</span>`;
+    d.innerHTML = `
+      <div class="poster" aria-hidden="true">${/^https?:\/\//i.test(e.image_url || "") ? "" : (EMOJI[cat] || "🎉")}</div>
+      <div class="top">
+        <div class="datetile" aria-hidden="true">${dateTile(e.date)}</div>
+        <div><h3>${esc(e.name)}</h3><div class="muted venue">${PIN}${esc(e.venue)}</div></div>
+        <span class="chip cat">${esc(cat)}</span>
+      </div>
+      <div class="foot"><div><div class="price">${e.price > 0 ? "₹" + esc(e.price) + (isTeam ? " / team" : "") : "Free"}</div>${kind}${status}</div></div>
+      <div class="actions"></div>`;
+    if (/^https?:\/\//i.test(e.image_url || "")) d.querySelector(".poster").style.backgroundImage = `url("${e.image_url.replace(/["\\\s]/g, "")}")`;
+    const full = e.seats_left <= 0, acts = d.querySelector(".actions");
+    const b = document.createElement("button"); b.className = "primary";
+    b.textContent = full ? "Join waitlist" : (isTeam ? "Register team" : "Register");
+    b.onclick = () => full ? openWaitlist(e) : openRegister(e); acts.appendChild(b);
+    if (isTeam) {
+      const lb = document.createElement("button"); lb.type = "button"; lb.className = "small"; lb.textContent = "🏆 Leaderboard";
+      lb.onclick = () => openBoard(e); acts.appendChild(lb);
+    }
+    const cal = document.createElement("button"); cal.type = "button"; cal.className = "small"; cal.textContent = "＋ Calendar";
+    cal.onclick = () => addToCalendar(e); acts.appendChild(cal);
+    d.addEventListener("pointermove", ev => {
+      const r = d.getBoundingClientRect();
+      d.style.setProperty("--mx", (ev.clientX - r.left) + "px"); d.style.setProperty("--my", (ev.clientY - r.top) + "px");
+    });
+    $("events").appendChild(d);
+  }
+}
+$("search").oninput = loadEvents;
+
+let teamRows = [];   // the other team members (the person registering is the leader)
+
+function renderTeam(){
+  const box = $("member-rows"); box.innerHTML = "";
+  teamRows.forEach((m, i) => {
+    const row = document.createElement("div"); row.className = "member";
+    row.innerHTML = `<input placeholder="Member ${i + 2} name" aria-label="Member ${i + 2} name" value="${esc(m.name)}">
+                     <input type="email" placeholder="Email (optional, for reminders)" aria-label="Member ${i + 2} email" value="${esc(m.email)}">
+                     <button type="button" class="small danger">Remove</button>`;
+    const [n, em, rm] = row.children;
+    n.oninput = () => m.name = n.value;
+    em.oninput = () => m.email = em.value;
+    rm.disabled = teamRows.length <= current.min_team_size - 1;
+    rm.onclick = () => { teamRows.splice(i, 1); renderTeam(); };
+    box.appendChild(row);
+  });
+  const size = 1 + teamRows.length;
+  $("team-hint").textContent = `You + ${teamRows.length} = ${size} member${size === 1 ? "" : "s"}. Allowed: ${sizeLabel(current)}. The fee is per team.`;
+  $("add-member").disabled = size >= current.max_team_size;
+  renderSeats();
+}
+$("add-member").onclick = () => {
+  if (1 + teamRows.length < current.max_team_size) { teamRows.push({name: "", email: ""}); renderTeam(); }
+};
+
+let couponInfo = null;
+let lastTicket = null;
+const payLabel = () => current && current.max_team_size > 1 ? "Pay & register team" : "Pay & get ticket";
+
+function openRegister(e){
+  if (!token || role !== "student") {
+    pendingEvent = e; pendingWaitlist = false;
+    setAuthMode(false);
+    $("login-msg").innerHTML = '<div class="msg info">Please log in or create a student account before registering. After login, you will return to this event.</div>';
+    show("login");
+    return;
+  }
+  current = e; const isTeam = e.max_team_size > 1;
+  $("reg-title").textContent = e.name;
+  $("reg-info").textContent = `${e.venue} · ${e.date} · ₹${e.price}${isTeam ? " per team" : ""}`;
+  $("reg-date").innerHTML = dateTile(e.date); $("reg-date").style.setProperty("--h", hue(e.id));
+  $("team-name-wrap").classList.toggle("hidden", !isTeam);
+  $("team-wrap").classList.toggle("hidden", !isTeam);
+  $("name-label").textContent = isTeam ? "Your name (team leader)" : "Your name";
+  $("team-name").value = "";
+  teamRows = [];
+  if (isTeam) { for (let i = 1; i < e.min_team_size; i++) teamRows.push({name: "", email: ""}); renderTeam(); }
+  $("pay-btn").textContent = payLabel();
+  couponInfo = null; $("coupon").value = ""; $("coupon-msg").innerHTML = "";
+  chosen = []; loadSeats();
+  $("name").value = uname; $("email").value = uemail;
+  $("name").readOnly = true; $("email").readOnly = true;
+  $("reg-msg").innerHTML = ""; show("register");
+}
+
+$("pay-btn").onclick = async () => {
+  const isTeam = current.max_team_size > 1;
+  const name = $("name").value.trim(), email = $("email").value.trim(), teamName = $("team-name").value.trim();
+  const members = teamRows.filter(m => m.name.trim() || m.email.trim()).map(m => ({name: m.name.trim(), email: m.email.trim()}));
+  const fail = msg => { $("reg-msg").innerHTML = `<div class="msg err">${esc(msg)}</div>`; };
+  if (!name || !email.includes("@")) return fail("Please enter your name and a valid email.");
+  if (isTeam) {
+    if (!teamName) return fail("Please enter a team name.");
+    if (members.some(m => !m.name)) return fail("Every team member needs a name.");
+    const size = 1 + members.length;
+    if (size < current.min_team_size || size > current.max_team_size)
+      return fail(`Team size must be between ${current.min_team_size} and ${current.max_team_size} members, including you.`);
+  }
+  if (seatInfo && chosen.length && chosen.length !== seatNeed())
+    return fail(`Pick exactly ${seatNeed()} seat${seatNeed() === 1 ? "" : "s"}, or none and we will choose the best ones for you.`);
+  $("pay-btn").disabled = true; $("pay-btn").textContent = "Processing payment…";
+  try {
+    const amount = Number(couponInfo ? couponInfo.final_price : current.price) || 0;
+    const payment = await razorpayCheckout(amount, email, `Registration: ${current.name}`);
+    const r = await fetch(`${API}/register`, {method:"POST", headers: jsonHeaders(),
+      body: JSON.stringify({event_id: current.id, student_name: name, student_email: email, coupon_code: $("coupon").value.trim(),
+                            team_name: isTeam ? teamName : "", members: isTeam ? members : [], seats: chosen, ...payment})});
+    const data = await r.json();
+    if (!r.ok) throw new Error(typeof data.detail === "string" ? data.detail : "Registration failed");
+    $("t-info").textContent = data.team_name
+      ? `Team ${data.team_name} (${data.team_size} members) is registered for ${data.event_name}.`
+      : `${data.student_name}, you're registered for ${data.event_name}.`;
+    $("t-note").textContent = data.team_name ? "One QR code for the whole team. Show it at the entrance to check everyone in." : "";
+    lastTicket = data;
+    $("t-seats").classList.toggle("hidden", !data.seats.length);
+    $("t-seats").textContent = data.seats.length ? `💺 Seat${data.seats.length === 1 ? "" : "s"} ${data.seats.join(", ")}` : "";
+    $("t-code").textContent = data.code; $("t-qr").src = `${API}/tickets/${data.code}/qr.png`;
+    show("ticket");
+  } catch(err){ fail(err.message); if (seatInfo) loadSeats(); }
+  $("pay-btn").disabled = false; $("pay-btn").textContent = payLabel();
+};
+
+async function loadStats(){
+  const r = await authFetch(`${API}/admin/stats`); if (!r.ok) return;
+  const s = await r.json();
+  $("totals").innerHTML = `<div class="stat"><b>${s.total_teams}</b><span class="muted">Teams</span></div>
+                           <div class="stat"><b>${s.total_individuals}</b><span class="muted">Individual participants</span></div>
+                           <div class="stat"><b>${s.total_checked_in}</b><span class="muted">Checked in</span></div>
+                           <div class="stat"><b>${s.total_waitlist}</b><span class="muted">On waitlists</span></div>
+                           <div class="stat"><b>${s.food_orders}</b><span class="muted">Food orders · ₹${s.food_revenue}</span></div>
+                           <div class="stat"><b>₹${s.total_revenue}</b><span class="muted">Ticket revenue</span></div>`;
+  $("stats").innerHTML = s.events.map(e => {
+    const n = e.registered, nm = esc(e.event).replace(/'/g, "");
+    const regd = e.team_event ? `${n} team${n === 1 ? "" : "s"} <span class="muted">(${e.people} people)</span>`
+                              : `${n} participant${n === 1 ? "" : "s"}`;
+    return `<tr><td>${esc(e.event)}</td><td>${e.team_event ? "Team of " + sizeLabel(e) : "Individual"}</td><td>${regd}</td><td>${e.seats_left}</td><td>${e.waitlist}</td><td>₹${e.revenue}</td>
+      <td><button class="small" onclick="showParticipants(${e.id}, '${nm}', ${e.team_event})">${e.team_event ? "Teams" : "Participants"}</button>
+          ${e.seated ? `<button class="small" onclick="showSeatMap(${e.id}, '${nm}')">Seats</button>` : ""}
+          <button class="small" onclick="remind(${e.id})">Send reminder</button>
+          <button class="small danger" onclick="delEvent(${e.id}, '${nm}')">Delete</button></td></tr>`;
+  }).join("");
+}
+
+/* ── participants + search ── */
+let pData = [], pEvent = null;
+
+async function showParticipants(id, name, isTeam){
+  pEvent = {id, name, isTeam}; $("p-search").value = "";
+  await fetchParticipants();
+  $("participants-card").classList.remove("hidden");
+  $("participants-card").scrollIntoView({behavior: "smooth", block: "nearest"});
+}
+
+async function fetchParticipants(){
+  if (!pEvent) return;
+  const r = await authFetch(`${API}/admin/events/${pEvent.id}/registrations`); if (!r.ok) return;
+  pData = await r.json(); renderParticipants();
+}
+
+function renderParticipants(){
+  const q = $("p-search").value.trim().toLowerCase();
+  const list = !q ? pData : pData.filter(p =>
+    [p.name, p.email, p.code, p.team_name, ...(p.members || []).flatMap(m => [m.name, m.email])].join(" ").toLowerCase().includes(q));
+  $("p-title").textContent = `${pEvent.isTeam ? "Teams" : "Participants"}: ${pEvent.name}`;
+  const unit = pEvent.isTeam ? "team" : "participant";
+  $("p-count").textContent = q ? `Showing ${list.length} of ${pData.length}`
+                               : `${pData.length} ${unit}${pData.length === 1 ? "" : "s"}`;
+  $("participants").innerHTML = list.length ? list.map(p => {
+    const who = p.team_name
+      ? `<b>${esc(p.team_name)}</b><div class="teamline">Leader: ${esc(p.name)}${p.members.length ? " · Members: " + p.members.map(m => esc(m.name)).join(", ") : ""}</div>`
+      : esc(p.name);
+    const gone = p.status === "cancelled";
+    return `<tr class="${gone ? "cancelled" : ""}"><td>${who}</td><td>${esc(p.email)}</td>
+      <td>${p.seats && p.seats.length ? esc(p.seats.join(", ")) : "–"}</td>
+      <td><code class="tcode">${esc(p.code)}</code><button class="small" onclick="copyText('${esc(p.code)}', this)">Copy</button></td>
+      <td>${gone ? '<span class="chip out">Cancelled</span>' : p.checked_in ? '<span class="badge-yes">✔ Checked in</span>' : '<span class="muted">Not yet</span>'}</td><td>${p.reminders_sent}</td></tr>`;
+  }).join("") : `<tr><td colspan=6 class='muted'>${pData.length ? "No match for your search." : "No registrations yet."}</td></tr>`;
+}
+$("p-search").oninput = () => { if (pEvent) renderParticipants(); };
+
+/* ── checked-in list ── */
+const fmtTime = iso => iso ? new Date(iso).toLocaleString([], {day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"}) : "–";
+
+async function loadCheckins(){
+  const r = await authFetch(`${API}/admin/checkins`); if (!r.ok) return;
+  const d = await r.json();
+  $("ci-count").textContent = d.count ? `· ${d.count}` : "";
+  $("checkins").innerHTML = d.items.length ? d.items.map(c => `<tr><td>${esc(c.name)}</td>
+      <td>${c.team_name ? esc(c.team_name) + ` <span class="muted">(${c.team_size})</span>` : "–"}</td>
+      <td>${esc(c.event)}</td><td>${c.seats && c.seats.length ? esc(c.seats.join(", ")) : "–"}</td><td>${fmtTime(c.checked_in_at)}</td></tr>`).join("")
+    : "<tr><td colspan=5 class='muted'>Nobody has checked in yet. Scan a ticket QR to start.</td></tr>";
+}
+
+async function remind(id){
+  const r = await authFetch(`${API}/admin/events/${id}/remind`, {method:"POST"});
+  const d = await r.json();
+  $("remind-msg").innerHTML = r.ok ? `<div class="msg ok">Reminders for ${esc(d.event)}: ${d.sent} sent, ${d.failed} failed</div>`
+                                   : `<div class="msg err">${esc(d.detail)}</div>`;
+  fetchParticipants();
+}
+
+async function delEvent(id, name){
+  if (!confirm(`Delete "${name}" and all its registrations? This cannot be undone.`)) return;
+  const r = await authFetch(`${API}/events/${id}`, {method:"DELETE"});
+  if (r.ok) { pEvent = null; $("participants-card").classList.add("hidden"); loadStats(); loadCheckins(); loadAnalytics(); }
+}
+
+async function doCheckin(code){
+  if (!code) { $("checkin-msg").innerHTML = '<div class="msg err">Enter or scan a ticket code first.</div>'; return false; }
+  const r = await authFetch(`${API}/tickets/${encodeURIComponent(code)}/checkin`, {method:"POST"});
+  const d = await r.json();
+  if (r.ok) {
+    const who = d.team_name ? `${d.student_name} · Team ${d.team_name} (${d.team_size} members)` : d.student_name;
+    $("checkin-msg").innerHTML = `<div class="msg ok">✔ ${esc(who)} checked in for ${esc(d.event_name)}${d.seats.length ? " · Seat " + esc(d.seats.join(", ")) : ""}</div>`;
+    loadStats(); loadCheckins(); fetchParticipants(); loadAnalytics();
+  } else {
+    $("checkin-msg").innerHTML = `<div class="msg err">${esc(typeof d.detail === "string" ? d.detail : "Check-in failed")}</div>`;
+  }
+  return r.ok;
+}
+$("checkin-btn").onclick = () => doCheckin($("checkin-code").value.trim());
+
+$("n-type").onchange = () => {
+  const team = $("n-type").value === "team";
+  $("n-min-wrap").classList.toggle("hidden", !team); $("n-max-wrap").classList.toggle("hidden", !team);
+  $("cap-label").textContent = team ? "Capacity (number of teams)" : "Capacity";
+  $("price-label").textContent = team ? "Price (₹ per team)" : "Price (₹)";
+};
+
+$("n-seat").onchange = () => {
+  const on = $("n-seat").value === "yes";
+  $("n-rows-wrap").classList.toggle("hidden", !on); $("n-cols-wrap").classList.toggle("hidden", !on);
+};
+
+$("add-btn").onclick = async () => {
+  const team = $("n-type").value === "team";
+  const min = team ? (+$("n-min").value || 1) : 1, max = team ? (+$("n-max").value || min) : 1;
+  const show = (cls, t) => { $("add-msg").innerHTML = `<div class="msg ${cls}">${esc(t)}</div>`; };
+  if (team && max < min) return show("err", "Maximum team size must be at least the minimum.");
+  const body = {name:$("n-name").value, venue:$("n-venue").value, date:$("n-date").value,
+                price:+$("n-price").value||0, capacity:+$("n-cap").value||100, min_team_size:min, max_team_size:max,
+                category:$("n-cat").value, image_url:$("n-img").value.trim(),
+                seat_rows: $("n-seat").value === "yes" ? (+$("n-rows").value || 0) : 0,
+                seat_cols: $("n-seat").value === "yes" ? (+$("n-cols").value || 0) : 0};
+  const r = await authFetch(`${API}/events`, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)});
+  const d = await r.json().catch(() => ({}));
+  if (r.ok) { loadAnalytics(); show("ok", team ? `Team event created (${min === max ? max : min + "–" + max} members per team)` : "Event created"); loadStats(); }
+  else show("err", typeof d.detail === "string" ? d.detail : "Could not create event. Check that every field is filled in.");
+};
+
+/* ── Calendar ── */
+function addToCalendar(ev){
+  const d = new Date(ev.date + "T00:00:00");
+  if (isNaN(d)) { alert("This event has no date yet."); return; }
+  const f = x => x.getFullYear() + String(x.getMonth() + 1).padStart(2, "0") + String(x.getDate()).padStart(2, "0");
+  const next = new Date(d); next.setDate(d.getDate() + 1);
+  const clean = t => String(t || "").replace(/[\\;,]/g, m => "\\" + m).replace(/\n/g, "\\n");
+  const stamp = new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+  const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//College Fest//EN", "BEGIN:VEVENT", `UID:${Date.now()}@fest`,
+    `DTSTAMP:${stamp}`, `DTSTART;VALUE=DATE:${f(d)}`, `DTEND;VALUE=DATE:${f(next)}`,
+    `SUMMARY:${clean(ev.name)}`, `LOCATION:${clean(ev.venue)}`, "END:VEVENT", "END:VCALENDAR"].join("\r\n");
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([ics], {type: "text/calendar"}));
+  a.download = "event.ics"; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+$("t-cal").onclick = () => { if (lastTicket) addToCalendar({name: lastTicket.event_name, date: lastTicket.event_date, venue: lastTicket.event_venue}); };
+
+/* ── Coupon ── */
+function refreshPrice(){
+  const isTeam = current.max_team_size > 1, price = couponInfo ? couponInfo.final_price : current.price;
+  $("reg-info").textContent = `${current.venue} · ${current.date} · ₹${price}${isTeam ? " per team" : ""}`;
+}
+$("coupon-btn").onclick = async () => {
+  const code = $("coupon").value.trim(); couponInfo = null;
+  if (!code) { $("coupon-msg").innerHTML = ""; refreshPrice(); return; }
+  const r = await fetch(`${API}/coupons/validate`, {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({code, event_id: current.id})});
+  const d = await r.json().catch(() => ({}));
+  if (r.ok) { couponInfo = d; $("coupon-msg").innerHTML = `<div class="msg ok">${d.percent}% off applied: ₹${d.original_price} → ₹${d.final_price}</div>`; }
+  else $("coupon-msg").innerHTML = `<div class="msg err">${esc(detail(d, "Invalid coupon"))}</div>`;
+  refreshPrice();
+};
+
+/* ── Waitlist ── */
+let wlEvent = null;
+function openWaitlist(e){
+  if (!token || role !== "student") {
+    pendingEvent = e; pendingWaitlist = true;
+    setAuthMode(false);
+    $("login-msg").innerHTML = '<div class="msg info">Please log in or create a student account before joining an event waitlist.</div>';
+    show("login");
+    return;
+  }
+  wlEvent = e; $("wl-title").textContent = "Join the waitlist: " + e.name; $("wl-msg").innerHTML = "";
+  $("wl-name").value = (token && !(role === "admin" || role === "organizer")) ? uname : ""; $("wl-email").value = (token && !(role === "admin" || role === "organizer")) ? uemail : "";
+  $("wl-dialog").showModal();
+}
+$("wl-cancel").onclick = () => $("wl-dialog").close();
+$("wl-join").onclick = async () => {
+  const r = await fetch(`${API}/events/${wlEvent.id}/waitlist`, {method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({name: $("wl-name").value.trim(), email: $("wl-email").value.trim()})});
+  const d = await r.json().catch(() => ({}));
+  $("wl-msg").innerHTML = r.ok ? `<div class="msg ok">You are number ${d.position} on the waitlist. We will email you if a spot opens up.</div>`
+                               : `<div class="msg err">${esc(detail(d, "Could not join the waitlist"))}</div>`;
+};
+
+/* ── My tickets ── */
+let myTickets = [];
+async function loadMyTickets(){
+  $("student-welcome").textContent = `Welcome, ${uname || "Student"}`;
+  $("student-account").textContent = uemail;
+  const r = await authFetch(`${API}/my/tickets`); if (!r.ok) return;
+  myTickets = await r.json();
+  $("my-list").innerHTML = myTickets.length ? myTickets.map((t, i) => {
+    const gone = t.status === "cancelled", people = [t.student_name, ...t.members.map(m => m.name)];
+    const chip = gone ? '<span class="chip out">Cancelled</span>' : t.checked_in ? '<span class="chip">✔ Checked in</span>' : '<span class="chip low">Not used yet</span>';
+    const certs = (!gone && t.checked_in) ? people.map(n => `<a class="filebtn" target="_blank" rel="noopener" href="${API}/tickets/${encodeURIComponent(t.code)}/certificate.pdf?name=${encodeURIComponent(n)}">🎓 Certificate${people.length > 1 ? ": " + esc(n) : ""}</a>`).join("") : "";
+    return `<div class="card mt ${gone ? "dim" : ""}">
+      <div class="qrbox"><img src="${API}/tickets/${encodeURIComponent(t.code)}/qr.png" alt="QR code for ${esc(t.event_name)}"></div>
+      <div><h3>${esc(t.event_name)} ${chip}</h3>
+        <div class="muted">${esc(t.event_date)} · ${esc(t.event_venue)}</div>
+        <div style="margin-top:6px">${t.team_name ? `Team <b>${esc(t.team_name)}</b> (${t.team_size} members)` : esc(t.student_name)}</div>
+        ${t.seats.length ? `<div style="margin-top:6px">💺 Seat${t.seats.length === 1 ? "" : "s"} <b>${esc(t.seats.join(", "))}</b></div>` : ""}
+        <div style="margin-top:6px"><code class="tcode">${esc(t.code)}</code><button class="small" onclick="copyText('${esc(t.code)}', this)">Copy</button></div>
+        <div class="muted" style="margin-top:4px">Paid ₹${t.amount_paid == null ? "–" : t.amount_paid}${t.coupon_code ? " with coupon " + esc(t.coupon_code) : ""}</div>
+        <div class="row">
+          <button class="small" onclick="addToCalendar({name: myTickets[${i}].event_name, date: myTickets[${i}].event_date, venue: myTickets[${i}].event_venue})">＋ Calendar</button>
+          ${(!gone && !t.checked_in) ? `<button class="small danger" onclick="cancelTicket('${esc(t.code)}')">Cancel &amp; refund</button>` : ""}
+          ${certs}
+        </div></div></div>`;
+  }).join("") : "<div class='card empty'><h3>No tickets yet</h3><p class='muted' style='margin:0'>Register for an event while logged in, or with the same email, and it will show up here.</p></div>";
+}
+async function loadStudentTools(){
+  $("profile-name").value = uname || "";
+  const r = await fetch(`${API}/events`); const events = r.ok ? await r.json() : [];
+  const opts = events.map(e => `<option value="${e.id}">${esc(e.name)}</option>`).join("");
+  $("wish-event").innerHTML = opts; $("feedback-event").innerHTML = opts;
+  loadWishlist();
+}
+async function loadWishlist(){
+  const r = await authFetch(`${API}/my/wishlist`); if (!r.ok) return;
+  const rows = await r.json();
+  $("wish-list").innerHTML = rows.length ? rows.map(x => `<div class="inline" style="justify-content:space-between"><span>${esc(x.event)}</span><button class="small danger" onclick="removeWish(${x.event_id})">Remove</button></div>`).join("") : "No saved events yet.";
+}
+async function removeWish(id){ await authFetch(`${API}/my/wishlist/${id}`, {method:"DELETE"}); loadWishlist(); }
+$("profile-save").onclick = async () => {
+  const r = await authFetch(`${API}/auth/profile`, {method:"PUT", headers:jsonHeaders(), body:JSON.stringify({name:$("profile-name").value.trim()})});
+  const d = await r.json().catch(()=>({}));
+  $("profile-msg").innerHTML = r.ok ? '<div class="msg ok">Profile updated.</div>' : `<div class="msg err">${esc(detail(d,"Could not update profile"))}</div>`;
+  if (r.ok) { uname=d.name; sessionStorage.setItem("uname",uname); $("student-welcome").textContent=`Welcome, ${uname}`; }
+};
+$("wish-add").onclick = async () => { const id=$("wish-event").value; const r=await authFetch(`${API}/my/wishlist/${id}`,{method:"POST"}); $("wish-list").insertAdjacentHTML("afterbegin",r.ok?'<div class="msg ok">Event saved.</div>':'<div class="msg err">Could not save event.</div>'); loadWishlist(); };
+$("wish-load").onclick = loadWishlist;
+$("feedback-send").onclick = async () => { const r=await authFetch(`${API}/my/feedback`,{method:"POST",headers:jsonHeaders(),body:JSON.stringify({event_id:+$("feedback-event").value,rating:+$("feedback-rating").value,comment:$("feedback-comment").value})}); $("feedback-msg").innerHTML=r.ok?'<div class="msg ok">Thanks! Your feedback was saved.</div>':'<div class="msg err">Could not submit feedback.</div>'; };
+$("notify-load").onclick = async () => { const r=await authFetch(`${API}/my/notifications`); if(!r.ok)return; const rows=await r.json(); $("notify-list").innerHTML=rows.length?rows.map(n=>`<div class="card"><b>${esc(n.title)}</b><p class="muted">${esc(n.message)}</p><small>${esc(n.created_at||"")}</small>${n.read?'<span class="chip">Read</span>':`<button class="small" onclick="markNotice(${n.id})">Mark read</button>`}</div>`).join(""):"No announcements yet."; };
+async function markNotice(id){ await authFetch(`${API}/my/notifications/${id}/read`,{method:"POST"}); $("notify-load").click(); }
+
+async function cancelTicket(code){
+  if (!confirm("Cancel this registration? Your payment will be refunded and the spot goes to the next person.")) return;
+  const r = await authFetch(`${API}/tickets/${encodeURIComponent(code)}/cancel`, {method:"POST"});
+  const d = await r.json().catch(() => ({}));
+  $("my-msg").innerHTML = r.ok ? `<div class="msg ok">Cancelled. ${d.refunded > 0 ? "Refunded ₹" + d.refunded + "." : ""}</div>`
+                               : `<div class="msg err">${esc(detail(d, "Could not cancel"))}</div>`;
+  loadMyTickets();
+}
+
+/* ── Judge panel ── */
+let judgeData = {criteria: [], items: []};
+async function loadJudgeEvents(){
+  const list = await (await fetch(`${API}/events`)).json();
+  const team = list.filter(e => e.max_team_size > 1), use = team.length ? team : list;
+  $("j-event").innerHTML = use.map(e => `<option value="${e.id}">${esc(e.name)}</option>`).join("");
+  loadJudgeTeams();
+}
+$("j-event").onchange = () => loadJudgeTeams();
+const cap = w => w.charAt(0).toUpperCase() + w.slice(1);
+async function loadJudgeTeams(){
+  const id = $("j-event").value;
+  if (!id) { $("j-teams").innerHTML = "<div class='card empty'><p class='muted' style='margin:0'>No events yet.</p></div>"; return; }
+  const r = await authFetch(`${API}/judge/events/${id}/teams`); if (!r.ok) return;
+  judgeData = await r.json();
+  $("j-teams").innerHTML = judgeData.items.length ? judgeData.items.map(t => {
+    const mine = t.my_scores;
+    const fields = judgeData.criteria.map(c => `<label>${cap(c)} (0-10)<input type="number" min="0" max="10" step="1" id="s-${t.code}-${c}" value="${mine ? mine[c] : ""}"></label>`).join("");
+    const total = mine ? judgeData.criteria.reduce((a, c) => a + mine[c], 0) : null;
+    return `<div class="card teamcard"><div class="head"><h3 style="margin:0">${esc(t.team)}</h3>
+        <span class="muted">${esc(t.leader)}${t.members.length ? ", " + t.members.map(esc).join(", ") : ""}</span></div>
+      <div class="scorefields">${fields}</div>
+      <label style="margin-top:12px">Comment (optional)<input id="s-${t.code}-comment" value="${mine ? esc(mine.comment) : ""}"></label>
+      <button class="primary" onclick="saveScore('${t.code}')">Save scores</button>
+      <span class="muted" id="st-${t.code}" style="margin-left:10px">${total === null ? "Not scored yet" : "Saved · total " + total + "/" + (10 * judgeData.criteria.length)}</span></div>`;
+  }).join("") : "<div class='card empty'><h3>No teams registered yet</h3></div>";
+}
+async function saveScore(code){
+  const body = {code, comment: $(`s-${code}-comment`).value};
+  for (const c of judgeData.criteria) {
+    const raw = $(`s-${code}-${c}`).value.trim(), v = Number(raw);
+    if (raw === "" || !Number.isInteger(v) || v < 0 || v > 10) { $(`st-${code}`).textContent = `Enter a whole number from 0 to 10 for ${c}.`; return; }
+    body[c] = v;
+  }
+  const r = await authFetch(`${API}/judge/scores`, {method:"PUT", headers: jsonHeaders(), body: JSON.stringify(body)});
+  const d = await r.json().catch(() => ({}));
+  $(`st-${code}`).textContent = r.ok ? `Saved · total ${d.total}/${10 * judgeData.criteria.length}` : detail(d, "Could not save");
+}
+
+/* ── Leaderboard (public, refreshes every 5 seconds) ── */
+let boardEvent = null;
+function openBoard(e){
+  boardEvent = e; show("board"); loadBoard();
+  boardTimer = setInterval(loadBoard, 5000);
+}
+async function loadBoard(){
+  const r = await fetch(`${API}/events/${boardEvent.id}/leaderboard`); if (!r.ok) return;
+  const d = await r.json();
+  $("b-title").textContent = "🏆 " + d.event + " leaderboard";
+  $("b-sub").textContent = `Live, updates every 5 seconds · scores out of ${d.max_total}` + (d.pending ? ` · ${d.pending} team${d.pending === 1 ? "" : "s"} not scored yet` : "");
+  $("b-head").innerHTML = `<tr><th>Rank</th><th>Team</th>${d.criteria.map(c => `<th>${cap(c)}</th>`).join("")}<th>Total</th><th>Judges</th></tr>`;
+  const medal = {1: "🥇", 2: "🥈", 3: "🥉"};
+  $("b-body").innerHTML = d.items.length ? d.items.map(t => `<tr><td class="medal">${medal[t.rank] || t.rank}</td>
+      <td><b>${esc(t.team)}</b><div class="teamline">${esc(t.leader)}</div></td>${d.criteria.map(c => `<td>${t.avg[c]}</td>`).join("")}
+      <td><b>${t.total}</b></td><td>${t.judges}</td></tr>`).join("")
+    : `<tr><td colspan="${d.criteria.length + 4}" class="muted">No scores yet. Judges are still scoring.</td></tr>`;
+}
+
+/* ── Analytics (drawn without any chart library) ── */
+function hbars(items, max){
+  const m = max || Math.max(1, ...items.map(i => i.value));
+  return items.length ? items.map(i => `<div class="hbar"><span title="${esc(i.label)}">${esc(i.label)}</span><div class="track"><div class="fill" style="width:${Math.round(100 * i.value / m)}%"></div></div><b>${i.text}</b></div>`).join("")
+                      : "<p class='muted'>No data yet.</p>";
+}
+function dayChart(days){
+  const W = 700, H = 170, pad = 14, max = Math.max(1, ...days.map(d => d.count)), bw = (W - pad * 2) / days.length;
+  const bars = days.map((d, i) => {
+    const h = Math.round((H - 54) * d.count / max), x = pad + i * bw + 4, y = H - 28 - h, mid = x + (bw - 8) / 2;
+    return `<rect x="${x}" y="${y}" width="${bw - 8}" height="${Math.max(h, 2)}" rx="5" fill="url(#barg)"/>`
+      + (d.count ? `<text x="${mid}" y="${y - 5}" text-anchor="middle" font-size="12" font-weight="700" fill="currentColor">${d.count}</text>` : "")
+      + `<text x="${mid}" y="${H - 10}" text-anchor="middle" font-size="11" fill="currentColor" opacity=".7">${d.date.slice(8)}/${d.date.slice(5, 7)}</text>`;
+  }).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Registrations per day"><defs><linearGradient id="barg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8b5cf6"/><stop offset="1" stop-color="#5b4bdb"/></linearGradient></defs>${bars}</svg>`;
+}
+async function loadAnalytics(){
+  const r = await authFetch(`${API}/admin/analytics`); if (!r.ok) return;
+  const a = await r.json();
+  $("chart-days").innerHTML = dayChart(a.by_day);
+  $("chart-rev").innerHTML = hbars(a.by_event.map(e => ({label: e.event, value: e.revenue, text: "₹" + e.revenue})));
+  $("chart-checkin").innerHTML = hbars(a.by_event.map(e => ({label: e.event, value: e.check_in_rate, text: e.check_in_rate + "%"})), 100);
+  $("analytics-note").textContent = `${a.cancelled} cancelled registration${a.cancelled === 1 ? "" : "s"} · ${a.coupon_uses} coupon use${a.coupon_uses === 1 ? "" : "s"}`;
+}
+$("export-btn").onclick = async () => {
+  const r = await authFetch(`${API}/admin/export.csv`); if (!r.ok) return;
+  const a = document.createElement("a"); a.href = URL.createObjectURL(await r.blob());
+  a.download = "registrations.csv"; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+
+/* ── Coupons and judges (admin) ── */
+async function loadCoupons(){
+  const r = await authFetch(`${API}/admin/coupons`); if (!r.ok) return;
+  const list = await r.json();
+  $("coupons").innerHTML = list.length ? list.map(c => `<tr><td><code class="tcode">${esc(c.code)}</code></td><td>${c.percent}%</td>
+    <td>${c.uses}${c.max_uses ? " / " + c.max_uses : ""}</td><td><button class="small danger" onclick="delCoupon(${c.id})">Delete</button></td></tr>`).join("")
+    : "<tr><td colspan=4 class='muted'>No coupons yet.</td></tr>";
+}
+$("c-add").onclick = async () => {
+  const max = $("c-max").value.trim();
+  const r = await authFetch(`${API}/admin/coupons`, {method:"POST", headers: jsonHeaders(),
+    body: JSON.stringify({code: $("c-code").value, percent: +$("c-pct").value, max_uses: max ? +max : null})});
+  const d = await r.json().catch(() => ({}));
+  $("c-msg").innerHTML = r.ok ? '<div class="msg ok">Coupon created</div>' : `<div class="msg err">${esc(detail(d, "Could not create the coupon"))}</div>`;
+  if (r.ok) { $("c-code").value = ""; loadCoupons(); }
+};
+async function delCoupon(id){
+  if (!confirm("Delete this coupon?")) return;
+  await authFetch(`${API}/admin/coupons/${id}`, {method:"DELETE"}); loadCoupons();
+}
+async function loadJudges(){
+  const r = await authFetch(`${API}/admin/judges`); if (!r.ok) return;
+  const list = await r.json();
+  $("judges").innerHTML = list.length ? list.map(j => `<tr><td>${esc(j.name)}</td><td>${esc(j.email)}</td>
+    <td><button class="small danger" onclick="delJudge(${j.id})">Delete</button></td></tr>`).join("")
+    : "<tr><td colspan=3 class='muted'>No judges yet.</td></tr>";
+}
+$("jg-add").onclick = async () => {
+  const r = await authFetch(`${API}/admin/judges`, {method:"POST", headers: jsonHeaders(),
+    body: JSON.stringify({name: $("jg-name").value, email: $("jg-email").value, password: $("jg-pass").value})});
+  const d = await r.json().catch(() => ({}));
+  $("jg-msg").innerHTML = r.ok ? '<div class="msg ok">Judge added. They can log in with that email and password.</div>' : `<div class="msg err">${esc(detail(d, "Could not add the judge"))}</div>`;
+  if (r.ok) { $("jg-name").value = $("jg-email").value = $("jg-pass").value = ""; loadJudges(); }
+};
+async function delJudge(id){
+  if (!confirm("Delete this judge and their scores?")) return;
+  await authFetch(`${API}/admin/judges/${id}`, {method:"DELETE"}); loadJudges();
+}
+
+/* ── Seat selection (student) ── */
+let seatInfo = null, chosen = [];
+const seatNeed = () => (current && current.max_team_size > 1) ? 1 + teamRows.length : 1;
+const seatId = (r, c) => String.fromCharCode(65 + r) + c;
+
+async function loadSeats(){
+  if (!(current.seat_rows > 0 && current.seat_cols > 0)) { seatInfo = null; $("seat-wrap").classList.add("hidden"); return; }
+  const r = await fetch(`${API}/events/${current.id}/seats`); if (!r.ok) return;
+  seatInfo = await r.json(); seatInfo.takenSet = new Set(seatInfo.taken);
+  chosen = chosen.filter(x => !seatInfo.takenSet.has(x));
+  $("seat-wrap").classList.remove("hidden"); renderSeats();
+}
+
+function renderSeats(){
+  if (!seatInfo) return;
+  const need = seatNeed(); chosen = chosen.slice(0, need);
+  $("seat-hint").textContent = (need === 1 ? "Tap a seat." : `Tap ${need} seats, one for each team member.`)
+    + " Or leave it empty and we will pick the best seats." + (chosen.length ? ` Selected: ${chosen.join(", ")}` : "");
+  const map = $("seatmap"); map.innerHTML = "";
+  for (let r = 0; r < seatInfo.rows; r++) {
+    const row = document.createElement("div"); row.className = "seatrow";
+    row.innerHTML = `<span class="rl" aria-hidden="true">${String.fromCharCode(65 + r)}</span>`;
+    for (let c = 1; c <= seatInfo.cols; c++) {
+      const id = seatId(r, c), taken = seatInfo.takenSet.has(id), sel = chosen.includes(id);
+      const b = document.createElement("button"); b.type = "button"; b.textContent = c;
+      b.className = "seat" + (taken ? " taken" : sel ? " sel" : ""); b.disabled = taken;
+      b.setAttribute("aria-label", `Seat ${id}, ${taken ? "taken" : sel ? "selected" : "free"}`); b.setAttribute("aria-pressed", String(sel));
+      b.onclick = () => toggleSeat(id); row.appendChild(b);
+    }
+    map.appendChild(row);
+  }
+}
+
+function toggleSeat(id){
+  const need = seatNeed();
+  if (chosen.includes(id)) chosen = chosen.filter(x => x !== id);
+  else if (need === 1) chosen = [id];
+  else if (chosen.length < need) chosen.push(id);
+  else { $("seat-hint").textContent = `You can pick ${need} seats. Tap a selected seat to remove it first.`; return; }
+  renderSeats();
+}
+
+function bestSeats(n){   // same idea as the server: side by side, middle rows, near the centre
+  const {rows, cols, takenSet} = seatInfo;
+  for (const r of [...Array(rows).keys()].sort((a, b) => Math.abs(a - (rows - 1) / 2) - Math.abs(b - (rows - 1) / 2))) {
+    let best = null;
+    for (let start = 1; start <= cols - n + 1; start++) {
+      const block = Array.from({length: n}, (_, i) => seatId(r, start + i));
+      if (block.some(x => takenSet.has(x))) continue;
+      const dist = Math.abs(start + (n - 1) / 2 - (cols + 1) / 2);
+      if (!best || dist < best.dist) best = {dist, block};
+    }
+    if (best) return best.block;
+  }
+  const free = []; for (let r = 0; r < rows; r++) for (let c = 1; c <= cols; c++) if (!takenSet.has(seatId(r, c))) free.push(seatId(r, c));
+  return free.length >= n ? free.slice(0, n) : [];
+}
+$("seat-auto").onclick = () => {
+  chosen = bestSeats(seatNeed()); renderSeats();
+  if (!chosen.length) $("seat-hint").textContent = "Not enough seats are left for your group.";
+};
+
+/* ── Seat map (organizer) ── */
+let smEvent = null;
+async function showSeatMap(id, name){
+  smEvent = {id, name}; $("sm-msg").innerHTML = ""; $("sm-detail").textContent = "";
+  await loadSeatMap(); $("seatmap-card").classList.remove("hidden");
+  $("seatmap-card").scrollIntoView({behavior: "smooth", block: "nearest"});
+}
+async function loadSeatMap(){
+  if (!smEvent) return;
+  const r = await authFetch(`${API}/admin/events/${smEvent.id}/seatmap`); if (!r.ok) return;
+  const d = await r.json(), by = {}; d.seats.forEach(x => by[x.seat] = x);
+  $("sm-title").textContent = "Seat map: " + d.event;
+  $("sm-count").textContent = `${d.seats.length} of ${d.rows * d.cols} seats booked. Tap a seat to see who has it.`;
+  const map = $("admin-seatmap"); map.innerHTML = "";
+  for (let r2 = 0; r2 < d.rows; r2++) {
+    const row = document.createElement("div"); row.className = "seatrow";
+    row.innerHTML = `<span class="rl" aria-hidden="true">${String.fromCharCode(65 + r2)}</span>`;
+    for (let c = 1; c <= d.cols; c++) {
+      const id = seatId(r2, c), x = by[id];
+      const b = document.createElement("button"); b.type = "button"; b.textContent = c;
+      b.className = "seat" + (x ? (x.checked_in ? " in" : " booked") : "");
+      b.title = x ? `${id}: ${x.name}` : `${id}: free`; b.setAttribute("aria-label", b.title);
+      b.onclick = () => {
+        $("sm-detail").textContent = x ? `${id}: ${x.name}${x.holder !== x.name ? " (" + x.holder + ")" : ""} · ticket ${x.code}${x.checked_in ? " · checked in" : ""}` : `${id} is free`;
+        if (x) $("sm-code").value = x.code;
+      };
+      row.appendChild(b);
+    }
+    map.appendChild(row);
+  }
+}
+$("sm-move").onclick = async () => {
+  const code = $("sm-code").value.trim(), seats = $("sm-seats").value.split(/[\s,]+/).filter(Boolean);
+  if (!code || !seats.length) { $("sm-msg").innerHTML = '<div class="msg err">Enter the ticket code and the new seat(s).</div>'; return; }
+  const r = await authFetch(`${API}/admin/tickets/${encodeURIComponent(code)}/seats`, {method:"PUT", headers: jsonHeaders(), body: JSON.stringify({seats})});
+  const d = await r.json().catch(() => ({}));
+  $("sm-msg").innerHTML = r.ok ? `<div class="msg ok">${esc(d.student_name)} is now in seat ${esc(d.seats.join(", "))}</div>` : `<div class="msg err">${esc(detail(d, "Could not move the seats"))}</div>`;
+  if (r.ok) { loadSeatMap(); fetchParticipants(); }
+};
+
+/* ── Food: student side ── */
+let stallsData = [], cart = {}, trackedCode = "", activeStall = null;
+const STEPS = ["placed", "preparing", "ready", "collected"];
+const STEP_LABEL = {placed: "Placed", preparing: "Preparing", ready: "Ready to collect", collected: "Collected"};
+
+function orderCard(o, cancelEmail){
+  const gone = o.status === "cancelled", idx = STEPS.indexOf(o.status);
+  const steps = gone ? '<span class="chip out">Cancelled and refunded</span>'
+    : `<div class="steps">${STEPS.map((x, i) => `<span class="${i < idx ? "done" : i === idx ? "now" : ""}">${STEP_LABEL[x]}</span>`).join("")}</div>`;
+  const cancel = (o.status === "placed" && cancelEmail)
+    ? `<button class="small danger" style="margin-top:10px" onclick="cancelFoodOrder('${esc(o.code)}', '${esc(cancelEmail)}')">Cancel &amp; refund</button>` : "";
+  return `<div class="card mt ${gone ? "dim" : ""}">
+    <div class="qrbox"><img src="${API}/orders/${encodeURIComponent(o.code)}/qr.png" alt="QR code for order ${esc(o.code)}"></div>
+    <div><div class="muted">${esc(o.stall_emoji)} ${esc(o.stall)}</div><div class="pickup">${esc(o.code)}</div>${steps}
+      <div>${o.items.map(i => `${i.qty} × ${esc(i.name)}`).join(", ")}</div>
+      <div class="muted" style="margin-top:4px">Total ₹${o.total}${o.seats.length ? " · Deliver to seat " + esc(o.seats.join(", ")) : ""}${o.note ? " · " + esc(o.note) : ""}</div>${cancel}</div></div>`;
+}
+
+async function loadFood(){
+  const r = await fetch(`${API}/stalls`); if (!r.ok) return;
+  stallsData = await r.json(); renderStalls(); refreshFood();
+}
+async function refreshFood(){
+  if (trackedCode) {
+    const r = await fetch(`${API}/orders/${encodeURIComponent(trackedCode)}`);
+    if (r.ok) $("track-result").innerHTML = orderCard(await r.json(), "");
+  }
+  if (token && !(role === "admin" || role === "organizer")) {
+    const r = await authFetch(`${API}/my/orders`);
+    if (r.ok) {
+      const list = await r.json();
+      $("my-orders-card").classList.toggle("hidden", !list.length);
+      $("my-orders").innerHTML = list.map(o => orderCard(o, uemail || o.email)).join("");
+    }
+  } else $("my-orders-card").classList.add("hidden");
+}
+
+function renderStalls(){
+  const box = $("stalls");
+  box.innerHTML = stallsData.length ? "" : "<div class='card empty'><h3>No food stalls yet</h3><p class='muted' style='margin:0'>Check back soon.</p></div>";
+  for (const st of stallsData) {
+    const c = document.createElement("div"); c.className = "card stall";
+    c.innerHTML = `<h3><span style="font-size:28px" aria-hidden="true">${esc(st.emoji)}</span> ${esc(st.name)} ${st.open ? "" : '<span class="chip out">Closed</span>'}</h3>
+      <div class="muted">${esc(st.description)}</div><div class="menu"></div>
+      <div class="cartbar"><b class="ctotal"></b><button class="primary corder" type="button">Pre-order</button></div>`;
+    const menu = c.querySelector(".menu"), ctotal = c.querySelector(".ctotal"), btn = c.querySelector(".corder");
+    const lines = cart[st.id] || (cart[st.id] = {});
+    const refresh = () => {
+      let n = 0, total = 0;
+      st.items.forEach(i => { const q = lines[i.id] || 0; n += q; total += q * i.price; });
+      ctotal.textContent = n ? `${n} item${n === 1 ? "" : "s"} · ₹${total}` : "Nothing added yet";
+      btn.disabled = !st.open || !n;
+    };
+    st.items.forEach(i => {
+      const row = document.createElement("div"); row.className = "mrow" + (i.available ? "" : " off");
+      const left = i.stock != null && i.stock > 0 && i.stock <= 10 ? ` · only ${i.stock} left` : "";
+      row.innerHTML = `<div><b>${esc(i.name)}</b><div class="muted">₹${i.price}${i.available ? left : " · sold out"}</div></div>
+        <div class="qty"><button type="button" class="small minus" aria-label="Remove one ${esc(i.name)}">−</button><b class="q">${lines[i.id] || 0}</b>
+        <button type="button" class="small plus" aria-label="Add one ${esc(i.name)}">+</button></div>`;
+      const q = row.querySelector(".q"), max = Math.min(10, i.stock == null ? 10 : i.stock);
+      row.querySelector(".minus").onclick = () => { if (lines[i.id]) { lines[i.id]--; if (!lines[i.id]) delete lines[i.id]; q.textContent = lines[i.id] || 0; refresh(); } };
+      row.querySelector(".plus").onclick = () => { if (i.available && st.open && (lines[i.id] || 0) < max) { lines[i.id] = (lines[i.id] || 0) + 1; q.textContent = lines[i.id]; refresh(); } };
+      if (!i.available || !st.open) row.querySelectorAll(".qty button").forEach(b => b.disabled = true);
+      menu.appendChild(row);
+    });
+    btn.onclick = () => openFoodDialog(st);
+    refresh(); box.appendChild(c);
+  }
+}
+
+function openFoodDialog(st){
+  if (!token || role !== "student") {
+    setAuthMode(false);
+    $("login-msg").innerHTML = '<div class="msg info">Please log in with your student account before placing a food order.</div>';
+    show("login");
+    return;
+  }
+  activeStall = st; const lines = cart[st.id] || {};
+  const picked = st.items.filter(i => lines[i.id]);
+  $("fd-title").textContent = `${st.emoji} ${st.name}`;
+  $("fd-summary").innerHTML = picked.map(i => `<div style="display:flex;justify-content:space-between;gap:12px"><span>${lines[i.id]} × ${esc(i.name)}</span><b>₹${lines[i.id] * i.price}</b></div>`).join("")
+    + `<div style="display:flex;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid rgba(120,120,160,.25)"><b>Total</b><b>₹${picked.reduce((a, i) => a + lines[i.id] * i.price, 0)}</b></div>`;
+  $("fd-name").value = (token && !(role === "admin" || role === "organizer")) ? uname : ""; $("fd-email").value = (token && !(role === "admin" || role === "organizer")) ? uemail : "";
+  $("fd-ticket").value = ""; $("fd-note").value = ""; $("fd-msg").innerHTML = "";
+  $("fd-form").classList.remove("hidden"); $("fd-done").classList.add("hidden"); $("fd-done").innerHTML = "";
+  $("food-dialog").showModal();
+}
+$("fd-cancel").onclick = () => $("food-dialog").close();
+$("fd-pay").onclick = async () => {
+  const lines = cart[activeStall.id] || {};
+  const items = Object.entries(lines).map(([id, qty]) => ({item_id: +id, qty}));
+  $("fd-pay").disabled = true; $("fd-pay").textContent = "Processing payment…";
+  try {
+    const email = $("fd-email").value.trim();
+    const total = activeStall.items.filter(i=>lines[i.id]).reduce((sum,i)=>sum + i.price * lines[i.id], 0);
+    const payment = await razorpayCheckout(total, email, `Food order: ${activeStall.name}`);
+    const r = await fetch(`${API}/orders`, {method:"POST", headers: jsonHeaders(), body: JSON.stringify({
+      name: $("fd-name").value.trim(), email, stall_id: activeStall.id, items,
+      ticket_code: $("fd-ticket").value.trim(), note: $("fd-note").value.trim(), ...payment})});
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) { $("fd-msg").innerHTML = `<div class="msg err">${esc(detail(d, "Could not place the order"))}</div>`; loadFood(); return; }
+    cart[activeStall.id] = {};
+    $("fd-form").classList.add("hidden"); $("fd-done").classList.remove("hidden");
+    $("fd-done").innerHTML = `<div class="msg ok">Order placed. Keep this pickup code safe.</div>${orderCard(d, d.email)}
+      <p class="muted">We will email you when it is ready. You can also follow it on the Food page.</p>
+      <button class="primary" type="button" onclick="$('food-dialog').close()">Done</button>`;
+    trackedCode = d.code; $("track-code").value = d.code; loadFood();
+  } finally { $("fd-pay").disabled = false; $("fd-pay").textContent = "Pay and place order"; }
+};
+$("track-btn").onclick = async () => {
+  const code = $("track-code").value.trim().toUpperCase(); if (!code) return;
+  const r = await fetch(`${API}/orders/${encodeURIComponent(code)}`);
+  if (!r.ok) { trackedCode = ""; $("track-result").innerHTML = ""; $("food-msg").innerHTML = '<div class="msg err">No order found with that code.</div>'; return; }
+  trackedCode = code; $("food-msg").innerHTML = ""; $("track-result").innerHTML = orderCard(await r.json(), "");
+};
+$("track-code").onkeydown = e => { if (e.key === "Enter") $("track-btn").click(); };
+async function cancelFoodOrder(code, email){
+  if (!confirm("Cancel this order? Your payment will be refunded.")) return;
+  const r = await fetch(`${API}/orders/${encodeURIComponent(code)}/cancel?email=${encodeURIComponent(email)}`, {method:"POST", headers: jsonHeaders()});
+  const d = await r.json().catch(() => ({}));
+  $("food-msg").innerHTML = r.ok ? '<div class="msg ok">Order cancelled and refunded.</div>' : `<div class="msg err">${esc(detail(d, "Could not cancel"))}</div>`;
+  if ($("food-dialog").open) $("food-dialog").close();
+  loadFood();
+}
+
+/* ── Food: organizer side ── */
+let foodAll = false;
+const NEXT_STEP = {placed: ["preparing", "Start preparing"], preparing: ["ready", "Mark ready"], ready: ["collected", "Collected"]};
+async function loadFoodOrders(){
+  const r = await authFetch(`${API}/admin/orders${foodAll ? "" : "?active=true"}`); if (!r.ok) return;
+  const list = await r.json();
+  $("fo-count").textContent = list.length ? `· ${list.length}` : "";
+  $("fo-body").innerHTML = list.length ? list.map(o => {
+    const next = NEXT_STEP[o.status];
+    const acts = (next ? `<button class="small" onclick="setOrder('${esc(o.code)}', '${next[0]}')">${next[1]}</button>` : "")
+      + ((o.status === "placed" || o.status === "preparing") ? `<button class="small danger" onclick="setOrder('${esc(o.code)}', 'cancelled')">Cancel</button>` : "");
+    const chip = o.status === "cancelled" ? '<span class="chip out">Cancelled</span>' : `<span class="chip ${o.status === "ready" ? "low" : ""}">${STEP_LABEL[o.status] || o.status}</span>`;
+    return `<tr class="${o.status === "cancelled" ? "cancelled" : ""}"><td><code class="tcode">${esc(o.code)}</code></td>
+      <td>${esc(o.name)}<div class="teamline">${esc(o.email)}</div></td><td>${esc(o.stall_emoji)} ${esc(o.stall)}</td>
+      <td>${o.items.map(i => `${i.qty} × ${esc(i.name)}`).join("<br>")}${o.note ? `<div class="teamline">“${esc(o.note)}”</div>` : ""}</td>
+      <td>₹${o.total}</td><td>${o.seats.length ? "Seat " + esc(o.seats.join(", ")) : "Pickup"}</td><td>${chip}</td><td>${acts}</td></tr>`;
+  }).join("") : `<tr><td colspan=8 class="muted">${foodAll ? "No food orders yet." : "No orders in the queue right now."}</td></tr>`;
+}
+async function setOrder(code, status){
+  if (status === "cancelled" && !confirm("Cancel this order and refund the customer?")) return;
+  const r = await authFetch(`${API}/admin/orders/${encodeURIComponent(code)}/status`, {method:"PUT", headers: jsonHeaders(), body: JSON.stringify({status})});
+  const d = await r.json().catch(() => ({}));
+  $("fo-msg").innerHTML = r.ok ? `<div class="msg ok">${esc(code)} is now ${esc(d.status)}</div>` : `<div class="msg err">${esc(detail(d, "Could not update the order"))}</div>`;
+  loadFoodOrders(); loadStats();
+}
+$("fo-collect").onclick = async () => {
+  const code = $("fo-code").value.trim().toUpperCase(); if (!code) { $("fo-msg").innerHTML = '<div class="msg err">Enter a pickup code.</div>'; return; }
+  await setOrder(code, "collected"); if ($("fo-msg").querySelector(".ok")) $("fo-code").value = "";
+};
+$("fo-toggle").onclick = () => { foodAll = !foodAll; $("fo-toggle").textContent = foodAll ? "Show only active orders" : "Show finished orders"; loadFoodOrders(); };
+
+async function loadStallAdmin(){
+  const r = await fetch(`${API}/stalls`); if (!r.ok) return;
+  const list = await r.json();
+  $("fi-stall").innerHTML = list.map(x => `<option value="${x.id}">${esc(x.name)}</option>`).join("");
+  $("fs-list").innerHTML = list.length ? list.map(st => `<div class="card" style="background:var(--row);box-shadow:none">
+    <div class="inline" style="justify-content:space-between"><b>${esc(st.emoji)} ${esc(st.name)} ${st.open ? "" : '<span class="chip out">Closed</span>'}</b>
+      <span><button class="small" onclick="toggleStall(${st.id}, ${!st.open})">${st.open ? "Close stall" : "Open stall"}</button>
+      <button class="small danger" onclick="delStall(${st.id})">Delete</button></span></div>
+    <div class="tablewrap"><table style="min-width:460px"><tbody>${st.items.map(i => `<tr><td>${esc(i.name)}</td><td>₹${i.price}</td>
+      <td>${i.stock == null ? "Unlimited" : i.stock + " in stock"}</td>
+      <td><button class="small" onclick="toggleItem(${i.id}, ${!i.available})">${i.available ? "Mark sold out" : "Mark available"}</button>
+      <button class="small" onclick="restock(${i.id})">Stock</button><button class="small danger" onclick="delItem(${i.id})">Delete</button></td></tr>`).join("")
+      || "<tr><td class='muted'>No items yet.</td></tr>"}</tbody></table></div></div>`).join("")
+    : "<p class='muted'>No stalls yet. Add one below.</p>";
+}
+const fsDone = (r, d, ok) => { $("fs-msg").innerHTML = r.ok ? `<div class="msg ok">${ok}</div>` : `<div class="msg err">${esc(detail(d, "Something went wrong"))}</div>`; if (r.ok) loadStallAdmin(); };
+async function fsCall(method, url, body, okText){
+  const r = await authFetch(`${API}${url}`, {method, headers: jsonHeaders(), body: body ? JSON.stringify(body) : undefined});
+  const d = await r.json().catch(() => ({})); fsDone(r, d, okText); return r.ok;
+}
+$("fs-add").onclick = async () => { if (await fsCall("POST", "/admin/stalls", {name: $("fs-name").value, emoji: $("fs-emoji").value, description: $("fs-desc").value}, "Stall added")) $("fs-name").value = $("fs-desc").value = $("fs-emoji").value = ""; };
+$("fi-add").onclick = async () => {
+  const stock = $("fi-stock").value.trim();
+  if (!$("fi-stall").value) { $("fs-msg").innerHTML = '<div class="msg err">Add a stall first.</div>'; return; }
+  if (await fsCall("POST", `/admin/stalls/${$("fi-stall").value}/items`, {name: $("fi-name").value, price: +$("fi-price").value || 0, stock: stock ? +stock : null}, "Item added")) $("fi-name").value = "";
+};
+const toggleStall = (id, open) => fsCall("PUT", `/admin/stalls/${id}`, {open}, open ? "Stall opened" : "Stall closed");
+const toggleItem = (id, available) => fsCall("PUT", `/admin/items/${id}`, {available}, available ? "Item is available" : "Item marked sold out");
+async function restock(id){
+  const v = prompt("New stock amount (leave empty for unlimited):"); if (v === null) return;
+  const n = v.trim();
+  fsCall("PUT", `/admin/items/${id}`, n === "" ? {unlimited: true} : {stock: Math.max(0, parseInt(n, 10) || 0)}, "Stock updated");
+}
+async function delItem(id){ if (confirm("Delete this menu item?")) fsCall("DELETE", `/admin/items/${id}`, null, "Item deleted"); }
+async function delStall(id){ if (confirm("Delete this stall and its menu?")) fsCall("DELETE", `/admin/stalls/${id}`, null, "Stall deleted"); }
+
+/* ── Copy button ── */
+function copyText(text, btn){
+  const done = () => { const old = btn.textContent; btn.textContent = "Copied"; setTimeout(() => btn.textContent = old, 1500); };
+  const fallback = () => {
+    const ta = document.createElement("textarea");
+    ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); done(); } catch (e) { btn.textContent = "Press Ctrl+C"; }
+    ta.remove();
+  };
+  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(done, fallback);
+  else fallback();
+}
+
+/* ── QR scanner ── */
+var stream = null, scanning = false, lastCode = "", lastAt = 0, detector = null;
+const cv = document.createElement("canvas"), cx = cv.getContext("2d", {willReadFrequently: true});
+const scanStatus = t => $("scan-status").textContent = t || "";
+
+const JSQR_SOURCES = ["/jsQR.min.js",
+  "https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js",
+  "https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"];
+const loadScript = src => new Promise(res => {
+  const el = document.createElement("script"); el.src = src;
+  el.onload = () => res(!!window.jsQR); el.onerror = () => res(false);
+  document.head.appendChild(el);
+});
+var jsqrPromise = null;
+function loadJsQR(){   // tries a local copy first, then two CDNs; result is cached
+  if (window.jsQR) return Promise.resolve();
+  if (!jsqrPromise) {
+    jsqrPromise = (async () => {
+      for (const src of JSQR_SOURCES) { if (await loadScript(src)) return; }
+      throw new Error("Could not load the QR reader. Connect to the internet once and try again, or use Chrome on Android / Mac, which has a built-in reader.");
+    })();
+    jsqrPromise.catch(() => setTimeout(() => { jsqrPromise = null; }, 30000));  // allow a retry later
+  }
+  return jsqrPromise;
+}
+
+async function decodeQR(src, w, h){
+  const native = "BarcodeDetector" in window;
+  if (native) {
+    try {
+      detector = detector || new BarcodeDetector({formats: ["qr_code"]});
+      const found = await detector.detect(src);
+      if (found.length) return found[0].rawValue.trim();
+    } catch (e) { detector = null; }
+  }
+  try { await loadJsQR(); }
+  catch (e) { if (native) return null; throw e; }   // built-in reader still works offline
+  const k = Math.min(1, 1000 / Math.max(w, h));
+  cv.width = Math.round(w * k); cv.height = Math.round(h * k);
+  cx.drawImage(src, 0, 0, cv.width, cv.height);
+  const r = jsQR(cx.getImageData(0, 0, cv.width, cv.height).data, cv.width, cv.height);
+  return r ? r.data.trim() : null;
+}
+
+async function handleScanned(code){
+  $("checkin-code").value = code;
+  const ok = await doCheckin(code);
+  if (ok && navigator.vibrate) navigator.vibrate(80);
+}
+
+async function startScan(){
+  scanStatus("");
+  if (!navigator.mediaDevices || !window.isSecureContext) {
+    scanStatus("Live camera only works on https or localhost. Use “Scan from photo” instead, or open the app on the laptop at localhost:8080.");
+    return;
+  }
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({video: {facingMode: "environment"}});
+  } catch (e) {
+    scanStatus("Camera blocked or not found. Allow camera access in the browser, or use “Scan from photo”.");
+    return;
+  }
+  const v = $("scan-video");
+  v.srcObject = stream; await v.play();
+  $("scanner").classList.remove("hidden");
+  scanStatus("Point the camera at the ticket QR code.");
+  if (!("BarcodeDetector" in window)) loadJsQR().catch(err => scanStatus(err.message));
+  scanning = true; scanLoop();
+}
+
+async function scanLoop(){
+  if (!scanning) return;
+  const v = $("scan-video");
+  if (v.videoWidth) {
+    try {
+      const code = await decodeQR(v, v.videoWidth, v.videoHeight);
+      if (code && (code !== lastCode || Date.now() - lastAt > 4000)) {
+        lastCode = code; lastAt = Date.now();
+        await handleScanned(code);
+      }
+    } catch (e) { scanStatus(e.message); stopScan(); return; }
+  }
+  setTimeout(scanLoop, 250);
+}
+
+function stopScan(){
+  scanning = false;
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  stream = null;
+  $("scanner").classList.add("hidden");
+}
+
+$("scan-btn").onclick = startScan;
+$("scan-stop").onclick = () => { stopScan(); scanStatus(""); };
+$("scan-file").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  scanStatus("Reading photo...");
+  try {
+    const img = await createImageBitmap(f);
+    const code = await decodeQR(img, img.width, img.height);
+    if (code) { scanStatus(""); await handleScanned(code); }
+    else scanStatus("No QR code found in that photo. Move closer, keep it flat and in good light, then try again.");
+  } catch (err) { scanStatus(err.message || "Could not read that photo."); }
+  e.target.value = "";
+};
+
+updateNav();
+loadEvents();
+</script>
+</body>
+</html>
