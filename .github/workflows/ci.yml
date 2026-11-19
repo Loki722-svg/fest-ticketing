@@ -1,4 +1,4 @@
-
+```yaml
 name: Fest Ticketing CI/CD
 
 on:
@@ -30,6 +30,11 @@ jobs:
 
       - name: Lint
         run: |
+          echo "Checking repository structure"
+          pwd
+          ls -la
+          echo "Checking payment-service"
+          ls -la payment-service
           flake8 booking-service/app payment-service \
             --select=E9,F63,F7,F82
 
@@ -82,3 +87,4 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/fest-${{ matrix.service }}:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/fest-${{ matrix.service }}:${{ github.sha }}
+```
