@@ -1,15 +1,12 @@
 services:
+  frontend:
+    image: loki1657/fest-frontend:latest
+    pull_policy: always
+
   booking-service:
     image: loki1657/fest-booking-service:latest
     pull_policy: always
-    build: null
 
   payment-service:
     image: loki1657/fest-payment-service:latest
     pull_policy: always
-    build: null
-
-  frontend:
-    image: loki1657/fest-frontend:latest
-    pull_policy: always
-    build: null
